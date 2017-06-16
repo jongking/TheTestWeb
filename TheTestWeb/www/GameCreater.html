@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <meta charset="utf-8"/>
+    <script type="text/javascript" src="../js/jquery-1.4.4.min.js"></script>
+    <script>
+        function Role() {
+            this.Extraversion = 0; //外向、有活力、热情
+            this.Agreeableness = 0; //愉快、利他、有感染力
+            this.Conscientionusness = 0; //公正、拘谨、克制
+            this.Neuroticism = 0; //神经质、消极情绪、神经过敏
+            this.OpennessToExperience = 0; //直率、创造性、思路开阔
+
+            this.Extraversion = Math.random() * 100;
+            this.Agreeableness = Math.random() * 100;
+            this.Conscientionusness = Math.random() * 100;
+            this.Neuroticism = Math.random() * 100;
+            this.OpennessToExperience = Math.random() * 100;
+        }
+
+        function Thing(name, e, a, c, n, o) {
+            this.Name = name;
+            this.Extraversion = e; //外向、有活力、热情
+            this.Agreeableness = a; //愉快、利他、有感染力
+            this.Conscientionusness = c; //公正、拘谨、克制
+            this.Neuroticism = n; //神经质、消极情绪、神经过敏
+            this.OpennessToExperience = o; //直率、创造性、思路开阔
+
+            if (this.Extraversion == null) {
+                this.Extraversion = Math.random() * 100;
+            }
+            if (this.Agreeableness == null) {
+                this.Agreeableness = Math.random() * 100;
+            }
+            if (this.Conscientionusness == null) {
+                this.Conscientionusness = Math.random() * 100;
+            }
+            if (this.Neuroticism == null) {
+                this.Neuroticism = Math.random() * 100;
+            }
+            if (this.OpennessToExperience == null) {
+                this.OpennessToExperience = Math.random() * 100;
+            }
+        }
+
+        function MakeRandomThings(thingnames, thingnum) {
+            var result = [];
+            for (var i = 0; i < thingnum; i++) {
+                //随机名称生成
+                var thing = new Thing(ThingNames(RandomInt(thingnames.length)));
+                result.push(thing);
+            }
+        }
+
+        function MakeRandomMySterys(roundThings, roundMySteryCount, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn) {
+            for (var i = 0; i < roundMySteryCount; i++) {
+                var roundMyStery = MakeRandomMyStery(
+                    roundThings,
+                    RandomInt(1, roundMySteryHeight),
+                    roundMySteryWidthUp,
+                    roundMySteryWidthDn);
+            }
+        }
+
+        function MakeRandomMyStery(roundThings, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn) {
+            var roundMyStery = {
+                Height: roundMySteryHeight
+            };
+            for (var i = 0; i < roundMyStery.Height; i++) {
+                //TODO
+            }
+        }
+
+        var ThingNames = [
+            "沙发", "沙发椅", "茶几", "角几(放电话)", "电视柜", "酒柜", "装饰柜",
+            "鞋柜", "衣帽柜", "玄关柜", "隔断", "床", "床头柜", "榻", "抱枕", "衣柜",
+            "梳妆台", "梳妆镜", "挂衣架", "橱柜", "吸油烟机", "灶具", "挂件", "冰箱",
+            "微波炉", "烤箱", "餐具", "餐桌", "餐椅", "餐边柜", "角柜", "吧台", "洗脸盆",
+            "坐便器", "淋浴屏", "浴缸", "花洒", "墩布池", "小便斗", "手纸篓", "地漏",
+            "马桶", "书架", "书桌椅", "文件柜", "鞋柜", "衣帽柜", "雨伞架", "书", "花瓶"
+        ];
+
+        var limitRange = [-30, 30];
+
+        function MakeGameRound(roundTime, roundMySteryTimeUp, roundMySteryTimeDn, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn) {
+            var result = {};
+            result.Rounds = [];
+
+            roundTime = parseInt(roundTime);
+            roundMySteryTimeUp = parseInt(roundMySteryTimeUp);
+            roundMySteryTimeDn = parseInt(roundMySteryTimeDn);
+            //循环生成每一关
+            for (var i = 0; i < roundTime; i++) {
+                var round = {
+                    RoundMySteryCount: RandomInt(roundMySteryTimeUp, roundMySteryTimeDn),//关卡迷数
+                    RoundMySterys: [],//关卡迷 数组
+                    RoundThings: []//关卡物品 数组
+                };
+                for (var j = 0; j < round.RoundMySteryCount; j++) {
+                    var roundMyStery = {};
+                    //生成关卡物品 数组
+                    round.RoundThings = MakeRandomThings(ThingNames, RandomInt(round.RoundMySteryCount + 2, round.RoundMySteryCount + 10));
+
+                    //根据关卡物品生成关卡密
+                    round.RoundMySterys = MakeRandomMySterys(round.RoundThings, round.RoundMySteryCount, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn);
+                }
+
+
+                result.Rounds.push(round);
+            }
+            return result;
+        }
+
+        function RandomInt(up, down) {
+            var rd = Math.random();
+            return (rd * (down - up) + up).toFixed(0);
+        }
+
+        function Start() {
+            //生成主角
+            var mainRole = new Role();
+
+            var roundTime = $("#RoundTime").val();
+            var roundMySteryTimeUp = $("#RoundMySteryTimeUp").val();
+            var roundMySteryTimeDn = $("#RoundMySteryTimeDn").val();
+            var roundMySteryHeight = $("#RoundMySteryHeight").val();
+            var roundMySteryWidthUp = $("#RoundMySteryWidthUp").val();
+            var roundMySteryWidthDn = $("#RoundMySteryWidthDn").val();
+            //生成关卡
+            var round = MakeGameRound(roundTime, roundMySteryTimeUp, roundMySteryTimeDn, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn);
+            $("#Result").text(JSON.stringify(round));
+        }
+    </script>
+</head>
+<body>
+<div>
+    关卡数
+    <input type="text" id="RoundTime" name="RoundTime" value="5" title="关卡数"/>
+</div>
+<div>
+    关卡迷数
+    <input type="text" id="RoundMySteryTimeUp" name="RoundMySteryTimeUp" value="3"/>->
+    <input type="text" id="RoundMySteryTimeDn" name="RoundMySteryTimeDn" value="6"/>
+</div>
+<div>
+    关卡迷深(树深度)
+    <input type="text" id="RoundMySteryHeight" name="RoundMySteryHeight" value="3"/>
+</div>
+<div>
+    关卡迷组合复杂度(树广度)
+    <input type="text" id="RoundMySteryWidthUp" name="RoundMySteryWidthUp" value="2"/>->
+    <input type="text" id="RoundMySteryWidthDn" name="RoundMySteryWidthDn" value="3"/>
+</div>
+<div>
+    <input type="button" value="生成开始" onclick="Start()"/>
+</div>
+<div id="Result">
+
+</div>
+</body>
+</html>

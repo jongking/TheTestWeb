@@ -5,10 +5,47 @@
 </head>
 <body>
 <canvas id="trails" style="border: 1px solid;" width="400" height="400"> </canvas>
+<div>
+    <input type="button" value="重新开始" onclick="location.reload();"/>
+</div>
 <script src="../js/jquery-1.4.4.min.js"></script>
 <!--开始提示-->
 <script>
-    var Bullet = function(x, y, to, sp, ty, bw) { //子弹类
+    //状态机
+    var StateMachine = function() {
+        this.currentState = 'zero';
+        this._eventObj = { zero: function () { } };
+
+        this.add = function(name, fun) {
+            this._eventObj[name] = fun;
+        }
+
+        this.run = function() {
+            this._eventObj[this.currentState](this);
+        }
+    }
+
+    //普通弹
+    function MyGameAI(player, target, warnDistant) {
+        var stateMachine = new StateMachine();
+
+        stateMachine.player = player;//ai对象,Player类
+        stateMachine.target = target;//ai的目标对象,Player类
+        stateMachine.warnDistant = warnDistant;//安全距离
+
+        stateMachine.add("zero", function (statemac) {
+            statemac.currentState = "common";
+        });
+
+        stateMachine.add("common", function (statemac) {
+
+        });
+
+        return stateMachine;
+    }
+
+    //子弹类
+    var Bullet = function(x, y, to, sp, bw) { 
         this.arcTo = to;
         this.speed = sp;
         this.bx = x;
@@ -19,190 +56,149 @@
         this.liveTime = 0;
         this.live = 1; //表示子弹是否存在
         //this.hurt = ht;
-        this.type = ty; //1为普通弹，2为大炮，3为加农炮，4为黑洞炮, 5为斩击，6为隐身，7撞击。。。。
+        //this.type = ty; //1为普通弹，2为大炮，3为加农炮，4为黑洞炮, 5为斩击，6为隐身，7撞击。。。。
 
-        this.bInit = function(x, y, to, sp, ty, bw, lv) {
+        this.bInit = function(x, y, to, sp, bw, lv) {
             this.bx = x;
             this.by = y;
             this.arcTo = to;
             this.speed = sp;
-            this.type = ty;
+            //this.type = ty;
             this.byWho = bw;
             this.live = lv;
             this.liveTime = 0;
         };
-        this.animate = function(context, pl) { //子弹动画（分型号的）
-            if (this.type == 1) //1为普通弹动画
-            {
+        this.animate = function (context, chageRate) { //子弹动画（分型号的）
+            alert("no animate");
+            return;
+        };
+        this.bomeC = function (context, pl) { //单个子弹的碰撞检测
+            alert("no bomeC");
+            return;
+        }; //the end of bomeC()
+    }; //end
+
+    //普通弹
+    function PuTong_Bullet(x, y, to, sp, bw) {
+        var bullet = new Bullet(x, y, to, sp, bw);
+        bullet.animate = function (context, chageRate) {
+            var chageRatems = chageRate * 33;
+            this.bulletX = this.bx + this.liveTime * this.speed * Math.cos(this.arcTo);
+            this.bulletY = this.by + this.liveTime * this.speed * Math.sin(this.arcTo);
+            context.fillRect(this.bulletX, this.bulletY, 5, 5);
+            this.liveTime += chageRatems;
+        }
+        bullet.bomeC = function (context, pl) {
+            if (this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20 && this.byWho != pl.role) {
+                this.bInit(10, 10, 0, 0, 0, 0, 0); //中招
+                pl.life -= 10;
+            }
+        }
+        return bullet;
+    }
+
+    //大炮
+    function DaPao_Bullet(x, y, to, sp, bw) {
+        var bullet = new Bullet(x, y, to, sp, bw);
+        bullet.animate = function (context, chageRate) {
+            var chageRatems = chageRate * 33;
+            if (this.liveTime < 33) {
+                context.fillRect(this.bx + 5 * this.speed * Math.cos(this.arcTo), this.by + 5 * this.speed * Math.sin(this.arcTo), this.liveTime, this.liveTime);
+            } else {
+                this.bulletX = this.bx + (this.liveTime - 28) * this.speed * Math.cos(this.arcTo);
+                this.bulletY = this.by + (this.liveTime - 28) * this.speed * Math.sin(this.arcTo);
+                context.fillRect(this.bulletX, this.bulletY, 33, 33);
+            }
+            this.liveTime += chageRatems;
+        }
+        bullet.bomeC = function (context, pl) {
+            if (((this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20) ||
+                (this.bulletX + 33 > pl.x && this.bulletX + 33 < pl.x + 20 && this.bulletY + 33 > pl.y && this.bulletY + 33 < pl.y + 20) ||
+                (this.bulletX + 33 > pl.x && this.bulletX + 33 < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20) ||
+                (this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY + 33 > pl.y && this.bulletY + 33 < pl.y + 20))
+                && this.byWho != pl.role) {
+                this.bInit(-10, -10, 0, 0, 0, 0, 0); //中招
+                pl.life -= 30;
+            }
+        }
+        return bullet;
+    }
+
+    //加农炮
+    function JiaNong_Bullet(x, y, to, sp, bw) {
+        var bullet = new Bullet(x, y, to, sp, bw);
+        bullet.animate = function (context, chageRate) {
+            var chageRatems = chageRate * 33;
+            if (this.liveTime < 66) {
+                context.save();
+                context.fillStyle = "#FF0000";
+                context.translate(this.bx + 20 * Math.cos(this.arcTo), this.by + 20 * Math.sin(this.arcTo));
+
+                context.rotate(this.arcTo);
+
+                context.fillRect(0 - this.liveTime / 2, 0 - this.liveTime / 2, this.liveTime, this.liveTime);
+                context.restore();
+            } else if (this.liveTime < 100) {
+                this.bulletX = this.bx + 3 * (this.liveTime - 61) * this.speed * Math.cos(this.arcTo);
+                this.bulletY = this.by + 3 * (this.liveTime - 61) * this.speed * Math.sin(this.arcTo);
+                context.save();
+                context.fillStyle = "#FF0000";
+                context.translate(this.bx + 20 * Math.cos(this.arcTo), this.by + 20 * Math.sin(this.arcTo));
+                context.rotate(this.arcTo);
+                context.fillRect(-33, -33, 3 * this.speed * (this.liveTime - 61), 66);
+                context.restore();
+            } else {
+
+                this.bInit(-10, -10, 0, 0, 0, 0, 0);
+            }
+            this.liveTime += chageRatems;
+        }
+        bullet.bomeC = function (context, pl) {
+            if (this.liveTime > 93) {
+                pl.state = 1;
+            } else if (this.byWho == pl.role) {
+                pl.state = 2;
+            }
+            if (((this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20) ||
+                (this.bulletX + 66 > pl.x && this.bulletX + 66 < pl.x + 20 && this.bulletY + 66 > pl.y && this.bulletY + 66 < pl.y + 20) ||
+                (this.bulletX + 66 > pl.x && this.bulletX + 66 < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20) ||
+                (this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY + 66 > pl.y && this.bulletY + 66 < pl.y + 20))
+                && this.byWho != pl.role) {
+                pl.life -= 50;
+            }
+        }
+        return bullet;
+    }
+
+    //黑洞炮
+    function HeiDong_Bullet(x, y, to, sp, bw) {
+        var bullet = new Bullet(x, y, to, sp, bw);
+        bullet.animate = function (context, chageRate) {
+            var chageRatems = chageRate * 33;
+            if (this.liveTime < 33) {
+                context.beginPath();
                 this.bulletX = this.bx + this.liveTime * this.speed * Math.cos(this.arcTo);
                 this.bulletY = this.by + this.liveTime * this.speed * Math.sin(this.arcTo);
-                context.fillRect(this.bulletX, this.bulletY, 5, 5);
-                this.liveTime++;
-            } else if (this.type == 2) //2为大炮动画
-            {
-                if (this.liveTime++ < 33) {
-                    context.fillRect(this.bx + 5 * this.speed * Math.cos(this.arcTo), this.by + 5 * this.speed * Math.sin(this.arcTo), this.liveTime, this.liveTime);
-                } else {
-                    this.bulletX = this.bx + (this.liveTime - 28) * this.speed * Math.cos(this.arcTo);
-                    this.bulletY = this.by + (this.liveTime - 28) * this.speed * Math.sin(this.arcTo);
-                    context.fillRect(this.bulletX, this.bulletY, 33, 33);
-                }
-            } else if (this.type == 3) //3为加农炮动画
-            {
-                if (this.liveTime++ < 66) {
-                    context.save();
-                    context.fillStyle = "#FF0000";
-                    context.translate(this.bx + 20 * Math.cos(this.arcTo), this.by + 20 * Math.sin(this.arcTo));
 
-                    context.rotate(this.arcTo);
+                context.arc(this.bulletX, this.bulletY, 5, 0, 2 * Math.PI, false);
 
-                    context.fillRect(0 - this.liveTime / 2, 0 - this.liveTime / 2, this.liveTime, this.liveTime);
-                    context.restore();
-                } else if (this.liveTime < 100) {
-                    this.bulletX = this.bx + 3 * (this.liveTime - 61) * this.speed * Math.cos(this.arcTo);
-                    this.bulletY = this.by + 3 * (this.liveTime - 61) * this.speed * Math.sin(this.arcTo);
-                    context.save();
-                    context.fillStyle = "#FF0000";
-                    context.translate(this.bx + 20 * Math.cos(this.arcTo), this.by + 20 * Math.sin(this.arcTo));
-                    context.rotate(this.arcTo);
-                    context.fillRect(-33, -33, 3 * this.speed * (this.liveTime - 61), 66);
-                    context.restore();
-                } else {
+                context.closePath();
+                context.fill();
+            } else if (this.liveTime < 100) {
+                context.beginPath();
 
-                    this.bInit(-10, -10, 0, 0, 0, 0, 0);
-                }
-            } else if (this.type == 4) //4为重力炮动画
-            {
-                if (this.liveTime++ < 33) {
-                    context.beginPath();
-                    this.bulletX = this.bx + this.liveTime * this.speed * Math.cos(this.arcTo);
-                    this.bulletY = this.by + this.liveTime * this.speed * Math.sin(this.arcTo);
-                    //context.fillRect(this.bulletX,this.bulletY,5,5);
+                context.arc(this.bulletX, this.bulletY, this.liveTime - 28, 0, 2 * Math.PI, false);
 
-
-                    context.arc(this.bulletX, this.bulletY, 5, 0, 2 * Math.PI, false);
-
-                    context.closePath();
-                    context.fill();
-                } else if (this.liveTime < 100) {
-                    context.beginPath();
-                    //context.fillRect(this.bulletX-(this.liveTime-37)/2,this.bulletY -(this.liveTime-37)/2,this.liveTime-37,this.liveTime-37);
-
-                    context.arc(this.bulletX, this.bulletY, this.liveTime - 28, 0, 2 * Math.PI, false);
-
-                    context.closePath();
-                    context.fill();
-                } else {
-                    this.bInit(-10, -10, 0, 0, 0, 0, 0);
-                }
-            } else if (this.type == 5) //5为斩击
-            {
-                if (this.liveTime++ < 33) {
-                    context.beginPath();
-                    context.arc(this.bx, this.by, 50, -Math.PI / 2 + this.arcTo, -Math.PI / 2 + this.arcTo + Math.PI * this.liveTime / 33, false);
-
-                    context.closePath();
-                    context.fill();
-                } else if (this.liveTime < 66) {
-                    context.beginPath();
-                    context.arc(this.bx, this.by, 50, Math.PI / 2 + this.arcTo, Math.PI / 2 + this.arcTo - Math.PI * (this.liveTime - 33) / 33, true);
-                    context.closePath();
-                    context.fill();
-                } else if (this.liveTime < 100) {
-                    context.beginPath();
-                    context.arc(this.bx, this.by, 50, -Math.PI / 2 + this.arcTo, -Math.PI / 2 + this.arcTo + Math.PI * (this.liveTime - 66) / 33, false);
-                    context.closePath();
-                    context.fill();
-                } else {
-                    this.bInit(-10, -10, 0, 0, 0, 0, 0);
-                }
-            } else if (this.type == 6) //6为隐身
-            {
-                if (this.liveTime++ > 100) {
-                    this.bInit(-10, -10, 0, 0, 0, 0, 0);
-                }
-            } else if (this.type == 7) //7为瞬移
-            {
-            }
-        };
-        this.bomeP = function(x, y) { //点与玩家的碰撞检测
-            var i1 = Math.pow(this.bx + 20 * Math.cos(this.arcTo) - x - 16, 2) + Math.pow(this.by + 20 * Math.sin(this.arcTo) - 16 - y, 2);
-            var i2 = Math.pow(this.bx + 20 * Math.cos(this.arcTo) - x - 16, 2) + Math.pow(this.by + 20 * Math.sin(this.arcTo) + 16 - y, 2);
-            var i3 = Math.pow(this.bx + this.liveTime * this.speed * Math.cos(this.arcTo) - x - 16, 2) + Math.pow(this.by + this.liveTime * this.speed * Math.sin(this.arcTo) - 16 - y, 2);
-            var i4 = Math.pow(this.bx + this.liveTime * this.speed * Math.cos(this.arcTo) - x - 16, 2) + Math.pow(this.by + this.liveTime * this.speed * Math.sin(this.arcTo) + 16 - y, 2);
-            var i5 = (Math.pow(33, 2) + Math.pow(this.speed * (this.liveTime - 28) + 16, 2)) * 2;
-            if (i1 + i2 + i3 + i4 <= i5) {
-                return true;
+                context.closePath();
+                context.fill();
             } else {
-                return false;
+                this.bInit(-10, -10, 0, 0, 0, 0, 0);
             }
-        };
-        this.bomeP2 = function(x, y) { //点与玩家的碰撞检测
-
-            if ((x - this.bx) * Math.cos(this.arcTo) + this.bx > this.bx && (x - this.bx) * Math.cos(this.arcTo) + this.bx < this.bx + this.speed * (this.liveTime - 28) && -(y - this.by) * Math.sin(this.arcTo) + this.by > this.by - 100 && -(y - this.by) * Math.sin(this.arcTo) + this.by < this.by + 100) {
-                return true;
-            } else {
-                return false;
-            }
-        };
-        this.bomeP3 = function(x, y) { //斩击的碰撞检测
-
-            if ((Math.pow(this.bx - x, 2) + Math.pow(this.by - y, 2) < 2500)
-                && (x - this.bx) * Math.cos(-this.arcTo) > 0) {
-                return true;
-            } else {
-                return false;
-            }
-        };
-        this.bomeC = function(context, pl) { //单个子弹的碰撞检测
-            if (this.type == 1) //1为普通弹的碰撞检测
-            {
-                if (this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20 && this.byWho != pl.role) {
-                    this.bInit(10, 10, 0, 0, 0, 0, 0); //中招
-                    //context.fillText("击中", 200, 60, 400);
-                    pl.life -= 10;
-                }
-            } else if (this.type == 2) //2为大炮的碰撞检测
-            {
-                if (((this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20) ||
-                    (this.bulletX + 33 > pl.x && this.bulletX + 33 < pl.x + 20 && this.bulletY + 33 > pl.y && this.bulletY + 33 < pl.y + 20) ||
-                    (this.bulletX + 33 > pl.x && this.bulletX + 33 < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20) ||
-                    (this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY + 33 > pl.y && this.bulletY + 33 < pl.y + 20))
-                    && this.byWho != pl.role) {
-                    this.bInit(-10, -10, 0, 0, 0, 0, 0); //中招
-                    //context.fillText("击中", 200, 60, 400);
-                    pl.life -= 30;
-                }
-            } else if (this.type == 3) //3为加农炮的碰撞检测
-            {
-
-                if (this.liveTime > 93) {
-                    pl.state = 1;
-                } else if (this.byWho == pl.role) {
-                    pl.state = 2;
-                }
-
-                if (((this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20) ||
-                    (this.bulletX + 66 > pl.x && this.bulletX + 66 < pl.x + 20 && this.bulletY + 66 > pl.y && this.bulletY + 66 < pl.y + 20) ||
-                    (this.bulletX + 66 > pl.x && this.bulletX + 66 < pl.x + 20 && this.bulletY > pl.y && this.bulletY < pl.y + 20) ||
-                    (this.bulletX > pl.x && this.bulletX < pl.x + 20 && this.bulletY + 66 > pl.y && this.bulletY + 66 < pl.y + 20))
-                    && this.byWho != pl.role) {
-                    //this.bInit(-10,-10,0,0,0,0,0);//中招
-                    //context.fillText("击中", 200, 60, 400);
-                    pl.life -= 50;
-                }
-                /*
-                if(this.bomeP2(pl.x,pl.y) && this.byWho != pl.role)
-                {
-                    context.fillText("击中", 200, 60, 400);
-                }
-                */
-
-
-            } else if (this.type == 4 && this.liveTime > 33) //4为重力炮的碰撞检测
-            {
-                if ((Math.pow(this.bulletX - pl.x, 2) + Math.pow(this.bulletY - pl.y, 2) < this.liveTime * 100)
-                    && this.byWho != pl.role) {
+            this.liveTime += chageRatems;
+        }
+        bullet.bomeC = function (context, pl) {
+            if (this.liveTime > 33) {
+                if ((Math.pow(this.bulletX - pl.x, 2) + Math.pow(this.bulletY - pl.y, 2) < this.liveTime * 100) && this.byWho != pl.role) {
                     if (this.bulletX > pl.x) {
                         pl.x++;
                     } else {
@@ -215,77 +211,162 @@
                         pl.y--;
                     }
                 }
-            } else if (this.type == 5) //5为斩击的碰撞检测
-            {
-                if (this.byWho != pl.role && (this.bomeP3(pl.x, pl.y) || this.bomeP3(pl.x + 20, pl.y) || this.bomeP3(pl.x, pl.y + 20) || this.bomeP3(pl.x + 20, pl.y + 20))) {
-                    if (this.liveTime > 80) {
-                        context.fillText("击中3", 200, 60, 400);
-                        pl.life -= 30;
-                        pl.state = 1;
-                        this.liveTime = 99;
-                    } else if (this.liveTime > 50 && this.liveTime < 66) {
-                        context.fillText("击中2", 200, 60, 400);
-                        pl.life -= 30;
-                        this.liveTime = 66;
-                        pl.state = 2;
-                    } else if (this.liveTime > 16 && this.liveTime < 33) {
-                        context.fillText("击中1", 200, 60, 400);
-                        pl.life -= 30;
-                        this.liveTime = 33;
-                        pl.state = 2;
-                    }
-                }
-                if (this.byWho == pl.role) {
-                    if (this.liveTime > 78) {
-                        pl.state = 1;
-                    } else {
-                        pl.state = 2;
-                    }
-                }
-            } else if (this.type == 6) //隐身
-            {
-                if (this.liveTime > 99) {
+            }
+        }
+        return bullet;
+    }
+
+    //斩击
+    function ZhanJi_Bullet(x, y, to, sp, bw) {
+        var bullet = new Bullet(x, y, to, sp, bw);
+        bullet.animate = function (context, chageRate) {
+            var chageRatems = chageRate * 33;
+            if (this.liveTime < 33) {
+                context.beginPath();
+                context.arc(this.bx, this.by, 50, -Math.PI / 2 + this.arcTo, -Math.PI / 2 + this.arcTo + Math.PI * this.liveTime / 33, false);
+
+                context.closePath();
+                context.fill();
+            } else if (this.liveTime < 66) {
+                context.beginPath();
+                context.arc(this.bx, this.by, 50, Math.PI / 2 + this.arcTo, Math.PI / 2 + this.arcTo - Math.PI * (this.liveTime - 33) / 33, true);
+                context.closePath();
+                context.fill();
+            } else if (this.liveTime < 100) {
+                context.beginPath();
+                context.arc(this.bx, this.by, 50, -Math.PI / 2 + this.arcTo, -Math.PI / 2 + this.arcTo + Math.PI * (this.liveTime - 66) / 33, false);
+                context.closePath();
+                context.fill();
+            } else {
+                this.bInit(-10, -10, 0, 0, 0, 0, 0);
+            }
+            this.liveTime += chageRatems;
+        }
+        bullet.bomeP3 = function (x, y) { //斩击的碰撞检测
+            if ((Math.pow(this.bx - x, 2) + Math.pow(this.by - y, 2) < 2500)
+                && (x - this.bx) * Math.cos(-this.arcTo) > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+        bullet.bomeC = function (context, pl) {
+            if (this.byWho != pl.role && (this.bomeP3(pl.x, pl.y) || this.bomeP3(pl.x + 20, pl.y) || this.bomeP3(pl.x, pl.y + 20) || this.bomeP3(pl.x + 20, pl.y + 20))) {
+                if (this.liveTime > 80) {
+                    context.fillText("击中3", 200, 60, 400);
+                    pl.life -= 30;
                     pl.state = 1;
-                } else if (this.byWho == pl.role) {
-                    pl.state = 10;
-                }
-            } else if (this.type == 7) //瞬移
-            {
-                if (this.byWho == pl.role) {
-                    pl.x = this.bx + Math.cos(pl.arcRoun) * 100;
-                    pl.y = this.by + Math.sin(pl.arcRoun) * 100;
-                    this.bInit(-10, -10, 0, 0, 0, 0, 0);
+                    this.liveTime = 99;
+                } else if (this.liveTime > 50 && this.liveTime < 66) {
+                    context.fillText("击中2", 200, 60, 400);
+                    pl.life -= 30;
+                    this.liveTime = 66;
+                    pl.state = 2;
+                } else if (this.liveTime > 16 && this.liveTime < 33) {
+                    context.fillText("击中1", 200, 60, 400);
+                    pl.life -= 30;
+                    this.liveTime = 33;
+                    pl.state = 2;
                 }
             }
-        }; //the end of bomeC()
+            if (this.byWho == pl.role) {
+                if (this.liveTime > 78) {
+                    pl.state = 1;
+                } else {
+                    pl.state = 2;
+                }
+            }
+        }
+        return bullet;
+    }
 
-    }; //end
+    //隐身
+    function YinShen_Bullet(x, y, to, sp, bw) {
+        var bullet = new Bullet(x, y, to, sp, bw);
+        bullet.animate = function (context, chageRate) {
+            var chageRatems = chageRate * 33;
+            if (this.liveTime > 100) {
+                this.bInit(-10, -10, 0, 0, 0, 0, 0);
+            }
+            this.liveTime += chageRatems;
+        }
+        bullet.bomeC = function (context, pl) {
+            if (this.liveTime > 99) {
+                pl.state = 1;
+            } else if (this.byWho == pl.role) {
+                pl.state = 10;
+            }
+        }
+        return bullet;
+    }
 
-    var g_fps = 0;
-    var g_then = Date.now();
-    var Player = function(x, y, ro, life, w1, w2, w3, ms) { //玩家类
+    //瞬移
+    function XunYi_Bullet(x, y, to, sp, bw) {
+        var bullet = new Bullet(x, y, to, sp, bw);
+        bullet.animate = function (context, chageRate) {
+            var chageRatems = chageRate * 33;
+
+            this.liveTime += chageRatems;
+        }
+        bullet.bomeC = function (context, pl) {
+            if (this.byWho == pl.role) {
+                pl.x = this.bx + Math.cos(pl.arcRoun) * 100;
+                pl.y = this.by + Math.sin(pl.arcRoun) * 100;
+                this.bInit(-10, -10, 0, 0, 0, 0, 0);
+            }
+        }
+        return bullet;
+    }
+
+    //子弹的生成方法1为普通弹，2为大炮，3为加农炮，4为黑洞炮, 5为斩击，6为隐身，7瞬移
+    function BulletCreate(x, y, to, sp, bw, type) {
+        switch (type) {
+        case 1: return PuTong_Bullet(x, y, to, sp, bw);
+        case 2: return DaPao_Bullet(x, y, to, sp, bw);
+        case 3: return JiaNong_Bullet(x, y, to, sp, bw);
+        case 4: return HeiDong_Bullet(x, y, to, sp, bw);
+        case 5: return ZhanJi_Bullet(x, y, to, sp, bw);
+        case 6: return YinShen_Bullet(x, y, to, sp, bw);
+        case 7: return XunYi_Bullet(x, y, to, sp, bw);
+        default:
+            alert("no this type:" + type);
+            return null;
+        }
+    }
+
+    //玩家类
+    var Player = function (x, y, ro, life, weapon, ms) {
         this.x = x; //角色位置
         this.y = y;
         this.role = ro; //角色号
         this.life = life; //当前生命
         this.lifeMax = life; //最大生命
         this.state = 1; //1为正常状态，0为死亡状态，10为隐身状态，2为硬直状态
-        this.weapType = 1;
-        this.wea = [w1, w2, w3]; //选择三种武器
+        this.wea = weapon; //选择n种武器
+        this.weapType = weapon[0];
         this.weaNow = 0; //现在的武器
         this.weaDetla1 = [0, 0, 0, 0, 0, 0, 0, 0]; //7种武器
         this.arcRoun = 0; //炮头方向
         this.moveSpeed = ms; //速度
 
-        this.animate = function(context) { //玩家的绘制
+        this.operSet = {};
+        this.operSet.moveRight = false; //player1的键位
+        this.operSet.moveLeft = false;
+        this.operSet.moveUp = false;
+        this.operSet.moveDown = false;
+        this.operSet.turnLeft = false;
+        this.operSet.turnRight = false;
+        this.operSet.lockOn = false;
+        this.operSet.useWeapon = false;
+        this.operSet.changeWeapon = false;
 
+        this.animate = function(context) { //玩家的绘制
             var tyNum = this.weaDetla1.length;
             for (var i = 0; i < tyNum; i++) {
                 if (this.weaDetla1[i] > 0) {
                     this.weaDetla1[i]--;
                 }
             }
-
 
             if (this.life < 0) {
                 this.state = 0;
@@ -310,7 +391,7 @@
         };
         this.changeWT = function() {
             this.weaNow++;
-            if (this.weaNow > 2) {
+            if (this.weaNow > this.wea.length - 1) {
                 this.weaNow = 0;
             }
             this.weapType = this.wea[this.weaNow];
@@ -340,334 +421,359 @@
         };
     }; //the end of 玩家类
 
-    var bullets = new Array(); //武器数组
-
-    var gravel = new Image();
-    gravel.src = "../source/image/gravel.jpg";
-    gravel.onload = function() {
-        drawTrails();
-    };
-    var WeapNum1 = 0;
-    var WeapNum2 = 0;
-
-    var arrowLeft = 65; //player1的键位
-    var arrowUp = 87;
-    var arrowRight = 68;
-    var arrowDown = 83;
-    var arrowQ = 81;
-    var arrowE = 69;
-    var arrowSpace = 32;
-    var arrowT = 84;
-    var arrowY = 89;
-
-    var arrowLeft2 = 37; //player2的键位
-    var arrowUp2 = 38;
-    var arrowRight2 = 39;
-    var arrowDown2 = 40;
-    var arrowL4 = 100;
-    var arrowL5 = 101;
-    var arrowL6 = 102;
-    var arrowL7 = 103;
-    var arrowL8 = 104;
-    var arrowL9 = 105;
-
-    var moveRight = false; //player1的键位
-    var moveLeft = false;
-    var moveUp = false;
-    var moveDown = false;
-    var turnLeft = false;
-    var turnRight = false;
-    var lockOn = false;
-    var useWeapon = false;
-    var changeWeapon = false;
-
-    var moveRight2 = false; //player2的键位
-    var moveLeft2 = false;
-    var moveUp2 = false;
-    var moveDown2 = false;
-    var turnLeft2 = false;
-    var turnRight2 = false;
-    var lockOn2 = false;
-    var useWeapon2 = false;
-    var changeWeapon2 = false;
-
-    function bulletAnimate(context) { //子弹动画的产生
-        var bulNum = bullets.length;
-        for (var i = 0; i < bulNum; i++) {
-            if (!bullets[i].live) {
-                continue;
-            }
-            bullets[i].animate(context);
-        }
-    }
-
-    var player2 = new Player(200, 200, 2, 300, 1, 2, 3, 100); //创建玩家1，2(后三个参数为武器的种类)
-    var player1 = new Player(0, 0, 1, 300, 5, 6, 7, 100);
-
-    function wallCheck(pl) { //墙的碰撞检测
-        if (pl.x < 0) {
-            pl.x = 0;
-        } else if (player1.x + 20 > 400) {
-            pl.x = 380;
-        }
-        if (pl.y < 0) {
-            pl.y = 0;
-        } else if (pl.y + 20 > 400) {
-            pl.y = 380;
-        }
-    }
-
-    function bomeCheck(context, pl) { //全图的碰撞检测
-        var bulNum = bullets.length;
-        for (var i = 0; i < bulNum; i++) {
-            if (!bullets[i].live) {
-                continue;
-            }
-            bullets[i].bomeC(context, pl);
-        }
-    }
-
-    $(window).keydown(function(e) { //键盘按下的时候
-        var keyCode = e.keyCode;
-
-        if (2 != player1.state) {
-
-            if (keyCode == arrowRight) {
-                moveRight = true;
-            } else if (keyCode == arrowLeft) {
-                moveLeft = true;
-            } else if (keyCode == arrowUp) {
-                moveUp = true;
-            } else if (keyCode == arrowDown) {
-                moveDown = true;
-            } else if (keyCode == arrowQ) { //炮头向左
-                turnLeft = true;
-            } else if (keyCode == arrowE) { //炮头向右
-                turnRight = true;
-            } else if (keyCode == arrowSpace) { //瞄准
-                lockOn = true;
-            } else if (keyCode == arrowT) { //使用武器
-                useWeapon = true;
-            } else if (keyCode == arrowY) { //切换武器
-                changeWeapon = true;
-                player1.changeWT();
-            }
-        }
-        //玩家2的键位
-        if (2 != player2.state) {
-
-            if (keyCode == arrowRight2) {
-                moveRight2 = true;
-            } else if (keyCode == arrowLeft2) {
-                moveLeft2 = true;
-            } else if (keyCode == arrowUp2) {
-                moveUp2 = true;
-            } else if (keyCode == arrowDown2) {
-                moveDown2 = true;
-            } else if (keyCode == arrowL4) { //炮头向左
-                turnLeft2 = true;
-            } else if (keyCode == arrowL5) { //炮头向右
-                turnRight2 = true;
-            } else if (keyCode == arrowL6) { //瞄准
-                lockOn2 = true;
-            } else if (keyCode == arrowL7) { //使用武器
-                useWeapon2 = true;
-            } else if (keyCode == arrowL8) { //切换武器
-                changeWeapon2 = true;
-                player2.changeWT();
-            }
-        }
-    });
-
-    $(window).keyup(function(e) { //键盘放开的时候
-        var keyCode = e.keyCode;
-
-        if (keyCode == arrowRight) {
-            moveRight = false;
-        } else if (keyCode == arrowLeft) {
-            moveLeft = false;
-        } else if (keyCode == arrowUp) {
-            moveUp = false;
-        } else if (keyCode == arrowDown) {
-            moveDown = false;
-        } else if (keyCode == arrowQ) { //炮头向左
-            turnLeft = false;
-        } else if (keyCode == arrowE) { //炮头向右
-            turnRight = false;
-        } else if (keyCode == arrowSpace) { //瞄准
-            lockOn = false;
-        } else if (keyCode == arrowT) { //使用武器
-            useWeapon = false;
-        } else if (keyCode == arrowY) { //使用武器
-            changeWeapon = false;
+    //Game对象,直接用于管理整个游戏
+    function Game() {
+        var gameobj = this;
+        this.Start = function() {
+            this._Init();
+            this.Init();
+            this._Main();
         }
 
-        //玩家2的键位
-        if (keyCode == arrowRight2) {
-            moveRight2 = false;
-        } else if (keyCode == arrowLeft2) {
-            moveLeft2 = false;
-        } else if (keyCode == arrowUp2) {
-            moveUp2 = false;
-        } else if (keyCode == arrowDown2) {
-            moveDown2 = false;
-        } else if (keyCode == arrowL4) { //炮头向左
-            turnLeft2 = false;
-        } else if (keyCode == arrowL5) { //炮头向右
-            turnRight2 = false;
-        } else if (keyCode == arrowL6) { //瞄准
-            lockOn2 = false;
-        } else if (keyCode == arrowL7) { //使用武器
-            useWeapon2 = false;
-        } else if (keyCode == arrowL8) { //使用武器
-            changeWeapon2 = false;
-        }
-    });
-
-    function keyEvent(changeRate) { //按键处理
-        var moveDistant1 = changeRate * player1.moveSpeed;
-        var moveDistant2 = changeRate * player2.moveSpeed;
-        if (moveRight) {
-            player1.x += moveDistant1;
-        }
-        if (moveLeft) {
-            player1.x -= moveDistant1;
-        }
-        if (moveUp) {
-            player1.y -= moveDistant1;
-        }
-        if (moveDown) {
-            player1.y += moveDistant1;
-        }
-        if (turnLeft) {
-            player1.arcRoun = player1.arcRoun - 0.2 * moveDistant1;
-            if (player1.arcRoun < 0) {
-                player1.arcRoun = player1.arcRoun + 6.28;
-            }
-        }
-        if (turnRight) {
-            player1.arcRoun = player1.arcRoun + 0.2 * moveDistant1;
-            if (player1.arcRoun > 6.28) {
-                player1.arcRoun = player1.arcRoun - 6.28;
-            }
-        }
-        if (lockOn) {
-            if (player2.x > player1.x) {
-                player1.arcRoun = Math.atan((player2.y - player1.y) / (player2.x - player1.x));
-            } else {
-                player1.arcRoun = Math.PI + Math.atan((player2.y - player1.y) / (player2.x - player1.x));
-            }
-        }
-        if (useWeapon && player1.weaDl()) {
-            if (WeapNum1 < 50) //为防内存使用过度，子弹总数限制为50个，
-            {
-                bullets.push(new Bullet(player1.x + 10, player1.y + 10, player1.arcRoun, 5, player1.weapType, 1));
-                WeapNum1++;
-            } else {
-                if (WeapNum2 > 49) {
-                    WeapNum2 = 0;
-                }
-                bullets[WeapNum2].bInit(player1.x + 10, player1.y + 10, player1.arcRoun, 5, player1.weapType, 1, 1);
-                WeapNum2++;
-            }
+        this._Main = function() {
+            setInterval(function() {
+                gameobj._RunLoop();
+            }, 1);
         }
 
-
-        if (moveRight2) { //player2的键位
-            player2.x += moveDistant2;
+        this._Init = function() {
+            this._gFps = 1000;//fps 用于记录当前fps
+            this._gThen = Date.now();
+            this._chageRate = 1;
+            this.canvas = document.getElementById('trails');
+            this.context = this.canvas.getContext('2d');
+            this.context.save(); //在这里开始绘制坦克
+            this.context.beginPath();
+            this.context.lineWidth = 5;
+            this.context.stroke();
+            this.context.restore();
         }
-        if (moveLeft2) {
-            player2.x -= moveDistant2;
-        }
-        if (moveUp2) {
-            player2.y -= moveDistant2;
-        }
-        if (moveDown2) {
-            player2.y += moveDistant2;
-        }
-        if (turnLeft2) {
-            player2.arcRoun = player2.arcRoun - 0.2 * moveDistant1;
-            if (player2.arcRoun < 0) {
-                player2.arcRoun = player2.arcRoun + 6.28;
-            }
-        }
-        if (turnRight2) {
-            player2.arcRoun = player2.arcRoun + 0.2 * moveDistant1;
-            if (player2.arcRoun > 6.28) {
-                player2.arcRoun = player2.arcRoun - 6.28;
-            }
-        }
-        if (lockOn2) {
-            if (player1.x > player2.x) {
-                player2.arcRoun = Math.atan((player2.y - player1.y) / (player2.x - player1.x));
-            } else {
-                player2.arcRoun = Math.PI + Math.atan((player2.y - player1.y) / (player2.x - player1.x));
-            }
-        }
-        if (useWeapon2 && player2.weaDl()) {
-            if (WeapNum1 < 50) {
-                bullets.push(new Bullet(player2.x + 10, player2.y + 10, player2.arcRoun, 5, player2.weapType, 2));
-                WeapNum1++;
-            } else {
-                if (WeapNum2 > 49) {
-                    WeapNum2 = 0;
-                }
-                bullets[WeapNum2].bInit(player2.x + 10, player2.y + 10, player2.arcRoun, 5, player2.weapType, 2, 1);
-                WeapNum2++;
-            }
-        }
-    }
 
-    function drawTrails() {
-        var canvas = document.getElementById('trails');
-        var context = canvas.getContext('2d');
-
-        function animate() { //计时器主循环
-            var now = Date.now();
-            var delta = now - g_then;
-            g_fps = 1000 / delta;
-            if (g_fps > 200) {
-                return;
-            }
-            var chageRate = delta / 1000;//经过的时间，用于标准化速度
-            g_then = now;
-
-            context.clearRect(0, 0, 400, 400); //刷图
-
-            if (0 == player1.state || 0 == player2.state) {
-                context.fillText("end", 200, 60, 400);
-                return;
-            }
-
-            context.fillText(g_fps + "fps", 370, 10, 400);//fps
-
-            context.fillText(player1.weapType, 200, 60, 400);
-
-            keyEvent(chageRate); //按键事件处理
-
-            bomeCheck(context, player1); //检测
-            bomeCheck(context, player2);
-
-            wallCheck(player1);
-            wallCheck(player2);
-
-            bulletAnimate(context); //子弹动画
-
-            player1.animate(context); //玩家动画
-            player2.animate(context);
-        };
-
-        context.save(); //在这里开始绘制坦克
-        context.beginPath();
-        setInterval(animate, 1);
-        context.lineWidth = 5;
-        context.stroke();
-        context.restore();
-    }
-
-    function update() {
+        this.Init = function() { }
         
+        this._RunLoop = function() {
+            var now = Date.now();
+            var delta = now - this._gThen;
+            this._gFps = 1000 / delta;
+            while (this._gFps > 120) {
+                now = Date.now();
+                delta = now - this._gThen;
+                this._gFps = 1000 / delta;
+            }
+            this._chageRate = delta / 1000;//经过的时间，用于标准化速度
+            this._gThen = now;
+
+            this.Loop(this._chageRate);
+
+            this.context.fillText(this._gFps + "fps", 370, 10, 400);//fps
+        }
+
+        this.Loop = function () {
+            alert("No Loop");
+            return;
+        }
     }
+
+    var MyGame = function() {
+        var game = new Game();
+
+        game.Init = function () {
+            game.bullets = new Array(); //武器数组
+
+            //game.gravel = new Image();
+            //gravel.src = "../source/image/gravel.jpg";
+            //gravel.onload = function () {
+            //    drawTrails();
+            //};
+
+            game.player2 = new Player(200, 200, 2, 300, [1, 2, 3, 4], 200); //创建玩家1，2(后三个参数为武器的种类)
+            game.player1 = new Player(0, 0, 1, 300, [5, 6, 7], 200);
+
+            game.WeapNum1 = 0;
+            game.WeapNum2 = 0;
+
+            game.keySet = {};
+            game.keySet.arrowLeft = 65; //player1的键位
+            game.keySet.arrowUp = 87;
+            game.keySet.arrowRight = 68;
+            game.keySet.arrowDown = 83;
+            game.keySet.arrowQ = 81;
+            game.keySet.arrowE = 69;
+            game.keySet.arrowSpace = 32;
+            game.keySet.arrowT = 84;
+            game.keySet.arrowY = 89;
+
+            game.keySet.arrowLeft2 = 37; //player2的键位
+            game.keySet.arrowUp2 = 38;
+            game.keySet.arrowRight2 = 39;
+            game.keySet.arrowDown2 = 40;
+            game.keySet.arrowL4 = 100;
+            game.keySet.arrowL5 = 101;
+            game.keySet.arrowL6 = 102;
+            game.keySet.arrowL7 = 103;
+            game.keySet.arrowL8 = 104;
+            game.keySet.arrowL9 = 105;
+
+            $(window).keydown(game.KeyDownEven);
+
+            $(window).keyup(game.KeyUpEven);
+        }
+
+        game.KeyDownEven = function (e) { //键盘按下的时候
+            var keyCode = e.keyCode;
+
+            if (2 != game.player1.state) {
+                if (keyCode == game.keySet.arrowRight) {
+                    game.player1.operSet.moveRight = true;
+                } else if (keyCode == game.keySet.arrowLeft) {
+                    game.player1.operSet.moveLeft = true;
+                } else if (keyCode == game.keySet.arrowUp) {
+                    game.player1.operSet.moveUp = true;
+                } else if (keyCode == game.keySet.arrowDown) {
+                    game.player1.operSet.moveDown = true;
+                } else if (keyCode == game.keySet.arrowQ) { //炮头向左
+                    game.player1.operSet.turnLeft = true;
+                } else if (keyCode == game.keySet.arrowE) { //炮头向右
+                    game.player1.operSet.turnRight = true;
+                } else if (keyCode == game.keySet.arrowSpace) { //瞄准
+                    game.player1.operSet.lockOn = true;
+                } else if (keyCode == game.keySet.arrowT) { //使用武器
+                    game.player1.operSet.useWeapon = true;
+                } else if (keyCode == game.keySet.arrowY) { //切换武器
+                    game.player1.operSet.changeWeapon = true;
+                    game.player1.changeWT();
+                }
+            }
+            //玩家2的键位
+            if (2 != game.player2.state) {
+
+                if (keyCode == game.keySet.arrowRight2) {
+                    game.player2.operSet.moveRight = true;
+                } else if (keyCode == game.keySet.arrowLeft2) {
+                    game.player2.operSet.moveLeft = true;
+                } else if (keyCode == game.keySet.arrowUp2) {
+                    game.player2.operSet.moveUp = true;
+                } else if (keyCode == game.keySet.arrowDown2) {
+                    game.player2.operSet.moveDown = true;
+                } else if (keyCode == game.keySet.arrowL4) { //炮头向左
+                    game.player2.operSet.turnLeft = true;
+                } else if (keyCode == game.keySet.arrowL5) { //炮头向右
+                    game.player2.operSet.turnRight = true;
+                } else if (keyCode == game.keySet.arrowL6) { //瞄准
+                    game.player2.operSet.lockOn = true;
+                } else if (keyCode == game.keySet.arrowL7) { //使用武器
+                    game.player2.operSet.useWeapon = true;
+                } else if (keyCode == game.keySet.arrowL8) { //切换武器
+                    game.player2.operSet.changeWeapon = true;
+                    game.player2.changeWT();
+                }
+            }
+        }
+
+        game.KeyUpEven = function (e) {
+            var keyCode = e.keyCode;
+
+            if (keyCode == game.keySet.arrowRight) {
+                game.player1.operSet.moveRight = false;
+            } else if (keyCode == game.keySet.arrowLeft) {
+                game.player1.operSet.moveLeft = false;
+            } else if (keyCode == game.keySet.arrowUp) {
+                game.player1.operSet.moveUp = false;
+            } else if (keyCode == game.keySet.arrowDown) {
+                game.player1.operSet.moveDown = false;
+            } else if (keyCode == game.keySet.arrowQ) { //炮头向左
+                game.player1.operSet.turnLeft = false;
+            } else if (keyCode == game.keySet.arrowE) { //炮头向右
+                game.player1.operSet.turnRight = false;
+            } else if (keyCode == game.keySet.arrowSpace) { //瞄准
+                game.player1.operSet.lockOn = false;
+            } else if (keyCode == game.keySet.arrowT) { //使用武器
+                game.player1.operSet.useWeapon = false;
+            } else if (keyCode == game.keySet.arrowY) { //使用武器
+                game.player1.operSet.changeWeapon = false;
+            }
+
+            //玩家2的键位
+            if (keyCode == game.keySet.arrowRight2) {
+                game.player2.operSet.moveRight = false;
+            } else if (keyCode == game.keySet.arrowLeft2) {
+                game.player2.operSet.moveLeft = false;
+            } else if (keyCode == game.keySet.arrowUp2) {
+                game.player2.operSet.moveUp = false;
+            } else if (keyCode == game.keySet.arrowDown2) {
+                game.player2.operSet.moveDown = false;
+            } else if (keyCode == game.keySet.arrowL4) { //炮头向左
+                game.player2.operSet.turnLeft = false;
+            } else if (keyCode == game.keySet.arrowL5) { //炮头向右
+                game.player2.operSet.turnRight = false;
+            } else if (keyCode == game.keySet.arrowL6) { //瞄准
+                game.player2.operSet.lockOn = false;
+            } else if (keyCode == game.keySet.arrowL7) { //使用武器
+                game.player2.operSet.useWeapon = false;
+            } else if (keyCode == game.keySet.arrowL8) { //使用武器
+                game.player2.operSet.changeWeapon = false;
+            }
+        }
+
+        game.bulletAnimate = function (context, chageRate) { //子弹动画的产生
+            var bulNum = game.bullets.length;
+            for (var i = 0; i < bulNum; i++) {
+                if (!game.bullets[i].live) {
+                    continue;
+                }
+                game.bullets[i].animate(context, chageRate);
+            }
+        }
+
+        game.wallCheck = function (pl) { //墙的碰撞检测
+            if (pl.x < 0) {
+                pl.x = 0;
+            } else if (pl.x + 20 > 400) {
+                pl.x = 380;
+            }
+            if (pl.y < 0) {
+                pl.y = 0;
+            } else if (pl.y + 20 > 400) {
+                pl.y = 380;
+            }
+        }
+
+        game.bomeCheck = function (context, pl) { //全图的碰撞检测
+            var bulNum = game.bullets.length;
+            for (var i = 0; i < bulNum; i++) {
+                if (!game.bullets[i].live) {
+                    continue;
+                }
+                game.bullets[i].bomeC(context, pl);
+            }
+        }
+
+        game.keyEvent = function (changeRate) { //按键处理
+            var moveDistant1 = changeRate * game.player1.moveSpeed;
+            var moveDistant2 = changeRate * game.player2.moveSpeed;
+            if (game.player1.operSet.moveRight) {
+                game.player1.x += moveDistant1;
+            }
+            if (game.player1.operSet.moveLeft) {
+                game.player1.x -= moveDistant1;
+            }
+            if (game.player1.operSet.moveUp) {
+                game.player1.y -= moveDistant1;
+            }
+            if (game.player1.operSet.moveDown) {
+                game.player1.y += moveDistant1;
+            }
+            if (game.player1.operSet.turnLeft) {
+                game.player1.arcRoun = game.player1.arcRoun - 0.2 * moveDistant1;
+                if (game.player1.arcRoun < 0) {
+                    game.player1.arcRoun = game.player1.arcRoun + 6.28;
+                }
+            }
+            if (game.player1.operSet.turnRight) {
+                game.player1.arcRoun = game.player1.arcRoun + 0.2 * moveDistant1;
+                if (game.player1.arcRoun > 6.28) {
+                    game.player1.arcRoun = game.player1.arcRoun - 6.28;
+                }
+            }
+            if (game.player1.operSet.lockOn) {
+                if (game.player2.x > game.player1.x) {
+                    game.player1.arcRoun = Math.atan((game.player2.y - game.player1.y) / (game.player2.x - game.player1.x));
+                } else {
+                    game.player1.arcRoun = Math.PI + Math.atan((game.player2.y - game.player1.y) / (game.player2.x - game.player1.x));
+                }
+            }
+            if (game.player1.operSet.useWeapon && game.player1.weaDl()) {
+                if (game.WeapNum1 < 50) //为防内存使用过度，子弹总数限制为50个，
+                {//生成新子弹
+                    game.bullets.push(BulletCreate(game.player1.x + 10, game.player1.y + 10, game.player1.arcRoun, 5, 1, game.player1.weapType));
+                    game.WeapNum1++;
+                } else {
+                    if (game.WeapNum2 > 49) {
+                        game.WeapNum2 = 0;
+                    }
+                    //delete game.bullets[game.WeapNum2];
+                    game.bullets[game.WeapNum2] = BulletCreate(game.player1.x + 10, game.player1.y + 10, game.player1.arcRoun, 5, 1, game.player1.weapType);
+                    //game.bullets[game.WeapNum2].bInit(game.player1.x + 10, game.player1.y + 10, game.player1.arcRoun, 5, 1, 1);
+                    game.WeapNum2++;
+                }
+            }
+
+
+            if (game.player2.operSet.moveRight) { //player2的键位
+                game.player2.x += moveDistant2;
+            }
+            if (game.player2.operSet.moveLeft) {
+                game.player2.x -= moveDistant2;
+            }
+            if (game.player2.operSet.moveUp) {
+                game.player2.y -= moveDistant2;
+            }
+            if (game.player2.operSet.moveDown) {
+                game.player2.y += moveDistant2;
+            }
+            if (game.player2.operSet.turnLeft) {
+                game.player2.arcRoun = game.player2.arcRoun - 0.2 * moveDistant1;
+                if (game.player2.arcRoun < 0) {
+                    game.player2.arcRoun = game.player2.arcRoun + 6.28;
+                }
+            }
+            if (game.player2.operSet.turnRight) {
+                game.player2.arcRoun = game.player2.arcRoun + 0.2 * moveDistant1;
+                if (game.player2.arcRoun > 6.28) {
+                    game.player2.arcRoun = game.player2.arcRoun - 6.28;
+                }
+            }
+            if (game.player2.operSet.lockOn) {
+                if (game.player1.x > game.player2.x) {
+                    game.player2.arcRoun = Math.atan((game.player2.y - game.player1.y) / (game.player2.x - game.player1.x));
+                } else {
+                    game.player2.arcRoun = Math.PI + Math.atan((game.player2.y - game.player1.y) / (game.player2.x - game.player1.x));
+                }
+            }
+            if (game.player2.operSet.useWeapon && game.player2.weaDl()) {
+                if (game.WeapNum1 < 50) {//生成新子弹
+                    game.bullets.push(BulletCreate(game.player2.x + 10, game.player2.y + 10, game.player2.arcRoun, 5, 2, game.player2.weapType));
+                    game.WeapNum1++;
+                } else {
+                    if (game.WeapNum2 > 49) {
+                        game.WeapNum2 = 0;
+                    }
+                    //delete game.bullets[game.WeapNum2];
+                    game.bullets[game.WeapNum2] = BulletCreate(game.player2.x + 10, game.player2.y + 10, game.player2.arcRoun, 5, 2, game.player2.weapType);
+                    //game.bullets[game.WeapNum2].bInit(game.player2.x + 10, game.player2.y + 10, game.player2.arcRoun, 5, 2, 1);
+                    game.WeapNum2++;
+                }
+            }
+        }
+
+        game.Loop = function (chageRate) {
+            game.context.clearRect(0, 0, 400, 400); //刷图
+
+            if (0 == game.player1.state || 0 == game.player2.state) {
+                game.context.fillText("end", 200, 60, 400);
+                return;
+            }
+
+            game.keyEvent(chageRate); //按键事件处理
+
+            game.bomeCheck(game.context, game.player1); //检测
+            game.bomeCheck(game.context, game.player2);
+
+            game.wallCheck(game.player1);
+            game.wallCheck(game.player2);
+
+            game.bulletAnimate(game.context, chageRate); //子弹动画
+
+            game.player1.animate(game.context); //玩家动画
+            game.player2.animate(game.context);
+        }
+
+        return game;
+    }
+
+    $(function() {
+        new MyGame().Start();
+    });
 </script>
 </body>
 </html>
