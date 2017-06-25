@@ -5,6 +5,7 @@
     <title></title>
     <meta charset="utf-8"/>
     <script type="text/javascript" src="../js/jquery-1.4.4.min.js"></script>
+    <script type="text/javascript" src="../js/GameMain.js"></script>
     <script>
         function Role() {
             this.Extraversion = 0; //外向、有活力、热情
@@ -13,11 +14,11 @@
             this.Neuroticism = 0; //神经质、消极情绪、神经过敏
             this.OpennessToExperience = 0; //直率、创造性、思路开阔
 
-            this.Extraversion = Math.random() * 100;
-            this.Agreeableness = Math.random() * 100;
-            this.Conscientionusness = Math.random() * 100;
-            this.Neuroticism = Math.random() * 100;
-            this.OpennessToExperience = Math.random() * 100;
+            this.Extraversion = parseInt(Math.random() * 100);
+            this.Agreeableness = parseInt(Math.random() * 100);
+            this.Conscientionusness = parseInt(Math.random() * 100);
+            this.Neuroticism = parseInt(Math.random() * 100);
+            this.OpennessToExperience = parseInt(Math.random() * 100);
         }
 
         function Thing(name, e, a, c, n, o) {
@@ -29,19 +30,19 @@
             this.OpennessToExperience = o; //直率、创造性、思路开阔
 
             if (this.Extraversion == null) {
-                this.Extraversion = Math.random() * 100;
+                this.Extraversion = parseInt(Math.random() * 100);
             }
             if (this.Agreeableness == null) {
-                this.Agreeableness = Math.random() * 100;
+                this.Agreeableness = parseInt(Math.random() * 100);
             }
             if (this.Conscientionusness == null) {
-                this.Conscientionusness = Math.random() * 100;
+                this.Conscientionusness = parseInt(Math.random() * 100);
             }
             if (this.Neuroticism == null) {
-                this.Neuroticism = Math.random() * 100;
+                this.Neuroticism = parseInt(Math.random() * 100);
             }
             if (this.OpennessToExperience == null) {
-                this.OpennessToExperience = Math.random() * 100;
+                this.OpennessToExperience = parseInt(Math.random() * 100);
             }
         }
 
@@ -49,28 +50,62 @@
             var result = [];
             for (var i = 0; i < thingnum; i++) {
                 //随机名称生成
-                var thing = new Thing(ThingNames(RandomInt(thingnames.length)));
+                var thing = new Thing(thingnames[RandomInt(0, thingnames.length)]);
                 result.push(thing);
             }
+            return result;
         }
 
         function MakeRandomMySterys(roundThings, roundMySteryCount, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn) {
+            var result = [];
             for (var i = 0; i < roundMySteryCount; i++) {
                 var roundMyStery = MakeRandomMyStery(
                     roundThings,
-                    RandomInt(1, roundMySteryHeight),
+                    roundMySteryHeight,
                     roundMySteryWidthUp,
                     roundMySteryWidthDn);
+                result.push(roundMyStery);
             }
+            return result;
         }
 
-        function MakeRandomMyStery(roundThings, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn) {
-            var roundMyStery = {
-                Height: roundMySteryHeight
-            };
-            for (var i = 0; i < roundMyStery.Height; i++) {
-                //TODO
+        //生成一个主迷 尾递归
+        function MakeRandomMyStery(roundThings, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn, i) {
+            if (i == null) {
+                i = 1;
             }
+            var roundThingsLength = roundThings.length;
+            var roundMyStery = {
+                MySteryType: -1,//迷类型，0:物品合成，1：物品多次点击，-1，终结点
+                ClickCount: 0,//需点击次数
+                MySteryThing: null,//物品
+                ChildMySterys: []
+            };
+
+            if (i >= roundMySteryHeight) {//当递归到大于高度的时候就返回
+                return roundMyStery;
+            }
+
+            //TODO
+            roundMyStery.MySteryType = RandomInt(0, 1);//随机类型
+            if (roundMyStery.MySteryType == 1) {
+                roundMyStery.ClickCount = RandomInt(1, 4);
+            }
+            roundMyStery.MySteryThing = roundThings[RandomInt(0, roundThingsLength - 1)];//随机物品
+
+            var havachild = RandomBool();//是否有子迷
+            if (roundMyStery.MySteryType == 0) {//如果类型是物品合成则应该有子迷
+                havachild = true;
+            }
+
+            var roundMySteryWidth = RandomInt(roundMySteryWidthUp, roundMySteryWidthDn) - 1;//确定子迷的个数，-1是因为包括了父迷
+
+            for (var j = 0; j < roundMySteryWidth; j++) {
+                var obj = MakeRandomMyStery(roundThings, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn, i + 1);
+                roundMyStery.ChildMySterys.push(obj);
+            }
+
+            return roundMyStery;
         }
 
         var ThingNames = [
@@ -103,10 +138,9 @@
                     //生成关卡物品 数组
                     round.RoundThings = MakeRandomThings(ThingNames, RandomInt(round.RoundMySteryCount + 2, round.RoundMySteryCount + 10));
 
-                    //根据关卡物品生成关卡密
+                    //根据关卡物品生成关卡
                     round.RoundMySterys = MakeRandomMySterys(round.RoundThings, round.RoundMySteryCount, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn);
                 }
-
 
                 result.Rounds.push(round);
             }
@@ -114,11 +148,54 @@
         }
 
         function RandomInt(up, down) {
+            up = parseInt(up);
+            down = parseInt(down);
             var rd = Math.random();
-            return (rd * (down - up) + up).toFixed(0);
+            return parseInt((rd * (down - up) + up).toFixed(0));
         }
 
-        function Start() {
+        function RandomBool() {
+            var rd = Math.random();
+            return rd > 0.5;
+        }
+
+        function MakeResultString(rounds) {
+            //round 的大体结构是
+            /*
+            {"Rounds":
+            [{
+            "RoundMySteryCount":"1",
+            "RoundMySterys":[{"MySteryType":"1","ClickCount":"1","MySteryThing":{"Name":"茶几","Extraversion":26,"Agreeableness":41,"Conscientionusness":36,"Neuroticism":61,"OpennessToExperience":15},"ChildMySterys":[{"MySteryType":-1,"ClickCount":0,"MySteryThing":null,"ChildMySterys":[]}]}],
+            "RoundThings":[{"Name":"茶几","Extraversion":26,"Agreeableness":41,"Conscientionusness":36,"Neuroticism":61,"OpennessToExperience":15}]}]}
+            */
+            var result = "";
+            for (var i = 0; i < rounds.Rounds.length; i++) {
+                var c = i + 1;
+                var round = rounds.Rounds[i];
+                result += "第" + c + "个关卡<br/>";
+                result += "关卡迷数:" + round.RoundMySterys.length + "<br/>";
+                for (var j = 0; j < round.RoundMySterys.length; j++) {
+                    var k = j + 1;
+                    var roundMyStery = round.RoundMySterys[j];
+                    result += "第" + k + "个迷<br/>";
+                    if (roundMyStery.MySteryType == 1) {
+                        result += "迷类型为:物品多次点击<br/>";
+                    }
+                    else if (roundMyStery.MySteryType == 0) {
+                        result += "迷类型为:物品合成<br/>";
+                    }
+                    if (roundMyStery.MySteryType != -1) {
+                        result += "迷物品为:" + roundMyStery.MySteryThing.Name + "<br/>";
+                    }
+                    result += "迷子项个数为:" + roundMyStery.ChildMySterys.length + "<br/>";
+                }
+                result += "关卡物品数:" + round.RoundThings.length + "<br/>";
+            }
+            return result;
+        }
+
+        var mainRound = null;
+        function StartCreate() {
             //生成主角
             var mainRole = new Role();
 
@@ -130,11 +207,40 @@
             var roundMySteryWidthDn = $("#RoundMySteryWidthDn").val();
             //生成关卡
             var round = MakeGameRound(roundTime, roundMySteryTimeUp, roundMySteryTimeDn, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn);
-            $("#Result").text(JSON.stringify(round));
+            mainRound = round;
+            $("#Result").html(MakeResultString(mainRound));
+        }
+
+
+        var MyGame = function () {
+            var game = new Game("GameArea");
+
+            var gamepage = new YGamePage();
+            gamepage.Loop = function () {
+            }
+
+            game.ChangePage(gamepage);
+
+            return game;
+        }
+
+        var gameScreenWidth = 1024;
+        var gameScreenHeight = 768;
+        function StartGame() {
+            //if (mainRound == null) {
+            //    alert("还没生成关卡");
+            //    return;
+            //}
+
+            $("#GameArea").attr("width", gameScreenWidth);
+            $("#GameArea").attr("height", gameScreenHeight);
+
+            new MyGame().Start();
         }
     </script>
 </head>
 <body>
+    <canvas id="GameArea" style="border:1px solid #000;"> </canvas>
 <div>
     关卡数
     <input type="text" id="RoundTime" name="RoundTime" value="5" title="关卡数"/>
@@ -154,10 +260,15 @@
     <input type="text" id="RoundMySteryWidthDn" name="RoundMySteryWidthDn" value="3"/>
 </div>
 <div>
-    <input type="button" value="生成开始" onclick="Start()"/>
+    <input type="button" value="生成开始" onclick="StartCreate()"/>
+</div>
+<div>
+    生成结果：
 </div>
 <div id="Result">
-
+</div>
+<div>
+    <input type="button" value="游戏开始" onclick="StartGame()" />
 </div>
 </body>
 </html>
