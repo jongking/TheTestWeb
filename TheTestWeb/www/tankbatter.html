@@ -6,9 +6,10 @@
 <body>
 <canvas id="trails" style="border: 1px solid;" width="400" height="400"> </canvas>
 <div>
-    <input type="button" value="重新开始" onclick="location.reload();"/>
+    <input type="button" value="重新开始" onclick="ReloadGame()"/>
 </div>
 <script src="../js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="../js/GameMain.js"></script>
 <!--开始提示-->
 <script>
     //状态机
@@ -421,211 +422,212 @@
         };
     }; //the end of 玩家类
 
-    //Game对象,直接用于管理整个游戏
-    function Game() {
-        var gameobj = this;
-        this.Start = function() {
-            this._Init();
-            this.Init();
-            this._Main();
-        }
+    ////Game对象,直接用于管理整个游戏
+    //function Game() {
+    //    var gameobj = this;
+    //    this.Start = function() {
+    //        this._Init();
+    //        this.Init();
+    //        this._Main();
+    //    }
 
-        this._Main = function() {
-            setInterval(function() {
-                gameobj._RunLoop();
-            }, 1);
-        }
+    //    this._Main = function() {
+    //        setInterval(function() {
+    //            gameobj._RunLoop();
+    //        }, 1);
+    //    }
 
-        this._Init = function() {
-            this._gFps = 1000;//fps 用于记录当前fps
-            this._gThen = Date.now();
-            this._chageRate = 1;
-            this.canvas = document.getElementById('trails');
-            this.context = this.canvas.getContext('2d');
-            this.context.save(); //在这里开始绘制坦克
-            this.context.beginPath();
-            this.context.lineWidth = 5;
-            this.context.stroke();
-            this.context.restore();
-        }
+    //    this._Init = function() {
+    //        this._gFps = 1000;//fps 用于记录当前fps
+    //        this._gThen = Date.now();
+    //        this._chageRate = 1;
+    //        this.canvas = document.getElementById('trails');
+    //        this.context = this.canvas.getContext('2d');
+    //        this.context.save(); //在这里开始绘制坦克
+    //        this.context.beginPath();
+    //        this.context.lineWidth = 5;
+    //        this.context.stroke();
+    //        this.context.restore();
+    //    }
 
-        this.Init = function() { }
+    //    this.Init = function() { }
         
-        this._RunLoop = function() {
-            var now = Date.now();
-            var delta = now - this._gThen;
-            this._gFps = 1000 / delta;
-            while (this._gFps > 120) {
-                now = Date.now();
-                delta = now - this._gThen;
-                this._gFps = 1000 / delta;
-            }
-            this._chageRate = delta / 1000;//经过的时间，用于标准化速度
-            this._gThen = now;
+    //    this._RunLoop = function() {
+    //        var now = Date.now();
+    //        var delta = now - this._gThen;
+    //        this._gFps = 1000 / delta;
+    //        while (this._gFps > 120) {
+    //            now = Date.now();
+    //            delta = now - this._gThen;
+    //            this._gFps = 1000 / delta;
+    //        }
+    //        this._chageRate = delta / 1000;//经过的时间，用于标准化速度
+    //        this._gThen = now;
 
-            this.Loop(this._chageRate);
+    //        this.Loop(this._chageRate);
 
-            this.context.fillText(this._gFps + "fps", 370, 10, 400);//fps
-        }
+    //        this.context.fillText(this._gFps + "fps", 370, 10, 400);//fps
+    //    }
 
-        this.Loop = function () {
-            alert("No Loop");
-            return;
-        }
-    }
+    //    this.Loop = function () {
+    //        alert("No Loop");
+    //        return;
+    //    }
+    //}
 
-    var MyGame = function() {
-        var game = new Game();
+    function MyGamePage() {
 
-        game.Init = function () {
-            game.bullets = new Array(); //武器数组
+        var gamepage = new YGamePage();
 
-            //game.gravel = new Image();
+        gamepage.Init = function () {
+            gamepage.bullets = new Array(); //武器数组
+
+            //gamepage.gravel = new Image();
             //gravel.src = "../source/image/gravel.jpg";
             //gravel.onload = function () {
             //    drawTrails();
             //};
 
-            game.player2 = new Player(200, 200, 2, 300, [1, 2, 3, 4], 200); //创建玩家1，2(后三个参数为武器的种类)
-            game.player1 = new Player(0, 0, 1, 300, [5, 6, 7], 200);
+            gamepage.player2 = new Player(200, 200, 2, 300, [1, 2, 3, 4], 200); //创建玩家1，2(后三个参数为武器的种类)
+            gamepage.player1 = new Player(0, 0, 1, 300, [5, 6, 7], 200);
 
-            game.WeapNum1 = 0;
-            game.WeapNum2 = 0;
+            gamepage.WeapNum1 = 0;
+            gamepage.WeapNum2 = 0;
 
-            game.keySet = {};
-            game.keySet.arrowLeft = 65; //player1的键位
-            game.keySet.arrowUp = 87;
-            game.keySet.arrowRight = 68;
-            game.keySet.arrowDown = 83;
-            game.keySet.arrowQ = 81;
-            game.keySet.arrowE = 69;
-            game.keySet.arrowSpace = 32;
-            game.keySet.arrowT = 84;
-            game.keySet.arrowY = 89;
+            gamepage.keySet = {};
+            gamepage.keySet.arrowLeft = 65; //player1的键位
+            gamepage.keySet.arrowUp = 87;
+            gamepage.keySet.arrowRight = 68;
+            gamepage.keySet.arrowDown = 83;
+            gamepage.keySet.arrowQ = 81;
+            gamepage.keySet.arrowE = 69;
+            gamepage.keySet.arrowSpace = 32;
+            gamepage.keySet.arrowT = 84;
+            gamepage.keySet.arrowY = 89;
 
-            game.keySet.arrowLeft2 = 37; //player2的键位
-            game.keySet.arrowUp2 = 38;
-            game.keySet.arrowRight2 = 39;
-            game.keySet.arrowDown2 = 40;
-            game.keySet.arrowL4 = 100;
-            game.keySet.arrowL5 = 101;
-            game.keySet.arrowL6 = 102;
-            game.keySet.arrowL7 = 103;
-            game.keySet.arrowL8 = 104;
-            game.keySet.arrowL9 = 105;
+            gamepage.keySet.arrowLeft2 = 37; //player2的键位
+            gamepage.keySet.arrowUp2 = 38;
+            gamepage.keySet.arrowRight2 = 39;
+            gamepage.keySet.arrowDown2 = 40;
+            gamepage.keySet.arrowL4 = 100;
+            gamepage.keySet.arrowL5 = 101;
+            gamepage.keySet.arrowL6 = 102;
+            gamepage.keySet.arrowL7 = 103;
+            gamepage.keySet.arrowL8 = 104;
+            gamepage.keySet.arrowL9 = 105;
 
-            $(window).keydown(game.KeyDownEven);
+            $(window).keydown(gamepage.KeyDownEven);
 
-            $(window).keyup(game.KeyUpEven);
+            $(window).keyup(gamepage.KeyUpEven);
         }
 
-        game.KeyDownEven = function (e) { //键盘按下的时候
+        gamepage.KeyDownEven = function (e) { //键盘按下的时候
             var keyCode = e.keyCode;
 
-            if (2 != game.player1.state) {
-                if (keyCode == game.keySet.arrowRight) {
-                    game.player1.operSet.moveRight = true;
-                } else if (keyCode == game.keySet.arrowLeft) {
-                    game.player1.operSet.moveLeft = true;
-                } else if (keyCode == game.keySet.arrowUp) {
-                    game.player1.operSet.moveUp = true;
-                } else if (keyCode == game.keySet.arrowDown) {
-                    game.player1.operSet.moveDown = true;
-                } else if (keyCode == game.keySet.arrowQ) { //炮头向左
-                    game.player1.operSet.turnLeft = true;
-                } else if (keyCode == game.keySet.arrowE) { //炮头向右
-                    game.player1.operSet.turnRight = true;
-                } else if (keyCode == game.keySet.arrowSpace) { //瞄准
-                    game.player1.operSet.lockOn = true;
-                } else if (keyCode == game.keySet.arrowT) { //使用武器
-                    game.player1.operSet.useWeapon = true;
-                } else if (keyCode == game.keySet.arrowY) { //切换武器
-                    game.player1.operSet.changeWeapon = true;
-                    game.player1.changeWT();
+            if (2 != gamepage.player1.state) {
+                if (keyCode == gamepage.keySet.arrowRight) {
+                    gamepage.player1.operSet.moveRight = true;
+                } else if (keyCode == gamepage.keySet.arrowLeft) {
+                    gamepage.player1.operSet.moveLeft = true;
+                } else if (keyCode == gamepage.keySet.arrowUp) {
+                    gamepage.player1.operSet.moveUp = true;
+                } else if (keyCode == gamepage.keySet.arrowDown) {
+                    gamepage.player1.operSet.moveDown = true;
+                } else if (keyCode == gamepage.keySet.arrowQ) { //炮头向左
+                    gamepage.player1.operSet.turnLeft = true;
+                } else if (keyCode == gamepage.keySet.arrowE) { //炮头向右
+                    gamepage.player1.operSet.turnRight = true;
+                } else if (keyCode == gamepage.keySet.arrowSpace) { //瞄准
+                    gamepage.player1.operSet.lockOn = true;
+                } else if (keyCode == gamepage.keySet.arrowT) { //使用武器
+                    gamepage.player1.operSet.useWeapon = true;
+                } else if (keyCode == gamepage.keySet.arrowY) { //切换武器
+                    gamepage.player1.operSet.changeWeapon = true;
+                    gamepage.player1.changeWT();
                 }
             }
             //玩家2的键位
-            if (2 != game.player2.state) {
+            if (2 != gamepage.player2.state) {
 
-                if (keyCode == game.keySet.arrowRight2) {
-                    game.player2.operSet.moveRight = true;
-                } else if (keyCode == game.keySet.arrowLeft2) {
-                    game.player2.operSet.moveLeft = true;
-                } else if (keyCode == game.keySet.arrowUp2) {
-                    game.player2.operSet.moveUp = true;
-                } else if (keyCode == game.keySet.arrowDown2) {
-                    game.player2.operSet.moveDown = true;
-                } else if (keyCode == game.keySet.arrowL4) { //炮头向左
-                    game.player2.operSet.turnLeft = true;
-                } else if (keyCode == game.keySet.arrowL5) { //炮头向右
-                    game.player2.operSet.turnRight = true;
-                } else if (keyCode == game.keySet.arrowL6) { //瞄准
-                    game.player2.operSet.lockOn = true;
-                } else if (keyCode == game.keySet.arrowL7) { //使用武器
-                    game.player2.operSet.useWeapon = true;
-                } else if (keyCode == game.keySet.arrowL8) { //切换武器
-                    game.player2.operSet.changeWeapon = true;
-                    game.player2.changeWT();
+                if (keyCode == gamepage.keySet.arrowRight2) {
+                    gamepage.player2.operSet.moveRight = true;
+                } else if (keyCode == gamepage.keySet.arrowLeft2) {
+                    gamepage.player2.operSet.moveLeft = true;
+                } else if (keyCode == gamepage.keySet.arrowUp2) {
+                    gamepage.player2.operSet.moveUp = true;
+                } else if (keyCode == gamepage.keySet.arrowDown2) {
+                    gamepage.player2.operSet.moveDown = true;
+                } else if (keyCode == gamepage.keySet.arrowL4) { //炮头向左
+                    gamepage.player2.operSet.turnLeft = true;
+                } else if (keyCode == gamepage.keySet.arrowL5) { //炮头向右
+                    gamepage.player2.operSet.turnRight = true;
+                } else if (keyCode == gamepage.keySet.arrowL6) { //瞄准
+                    gamepage.player2.operSet.lockOn = true;
+                } else if (keyCode == gamepage.keySet.arrowL7) { //使用武器
+                    gamepage.player2.operSet.useWeapon = true;
+                } else if (keyCode == gamepage.keySet.arrowL8) { //切换武器
+                    gamepage.player2.operSet.changeWeapon = true;
+                    gamepage.player2.changeWT();
                 }
             }
         }
 
-        game.KeyUpEven = function (e) {
+        gamepage.KeyUpEven = function (e) {
             var keyCode = e.keyCode;
 
-            if (keyCode == game.keySet.arrowRight) {
-                game.player1.operSet.moveRight = false;
-            } else if (keyCode == game.keySet.arrowLeft) {
-                game.player1.operSet.moveLeft = false;
-            } else if (keyCode == game.keySet.arrowUp) {
-                game.player1.operSet.moveUp = false;
-            } else if (keyCode == game.keySet.arrowDown) {
-                game.player1.operSet.moveDown = false;
-            } else if (keyCode == game.keySet.arrowQ) { //炮头向左
-                game.player1.operSet.turnLeft = false;
-            } else if (keyCode == game.keySet.arrowE) { //炮头向右
-                game.player1.operSet.turnRight = false;
-            } else if (keyCode == game.keySet.arrowSpace) { //瞄准
-                game.player1.operSet.lockOn = false;
-            } else if (keyCode == game.keySet.arrowT) { //使用武器
-                game.player1.operSet.useWeapon = false;
-            } else if (keyCode == game.keySet.arrowY) { //使用武器
-                game.player1.operSet.changeWeapon = false;
+            if (keyCode == gamepage.keySet.arrowRight) {
+                gamepage.player1.operSet.moveRight = false;
+            } else if (keyCode == gamepage.keySet.arrowLeft) {
+                gamepage.player1.operSet.moveLeft = false;
+            } else if (keyCode == gamepage.keySet.arrowUp) {
+                gamepage.player1.operSet.moveUp = false;
+            } else if (keyCode == gamepage.keySet.arrowDown) {
+                gamepage.player1.operSet.moveDown = false;
+            } else if (keyCode == gamepage.keySet.arrowQ) { //炮头向左
+                gamepage.player1.operSet.turnLeft = false;
+            } else if (keyCode == gamepage.keySet.arrowE) { //炮头向右
+                gamepage.player1.operSet.turnRight = false;
+            } else if (keyCode == gamepage.keySet.arrowSpace) { //瞄准
+                gamepage.player1.operSet.lockOn = false;
+            } else if (keyCode == gamepage.keySet.arrowT) { //使用武器
+                gamepage.player1.operSet.useWeapon = false;
+            } else if (keyCode == gamepage.keySet.arrowY) { //使用武器
+                gamepage.player1.operSet.changeWeapon = false;
             }
 
             //玩家2的键位
-            if (keyCode == game.keySet.arrowRight2) {
-                game.player2.operSet.moveRight = false;
-            } else if (keyCode == game.keySet.arrowLeft2) {
-                game.player2.operSet.moveLeft = false;
-            } else if (keyCode == game.keySet.arrowUp2) {
-                game.player2.operSet.moveUp = false;
-            } else if (keyCode == game.keySet.arrowDown2) {
-                game.player2.operSet.moveDown = false;
-            } else if (keyCode == game.keySet.arrowL4) { //炮头向左
-                game.player2.operSet.turnLeft = false;
-            } else if (keyCode == game.keySet.arrowL5) { //炮头向右
-                game.player2.operSet.turnRight = false;
-            } else if (keyCode == game.keySet.arrowL6) { //瞄准
-                game.player2.operSet.lockOn = false;
-            } else if (keyCode == game.keySet.arrowL7) { //使用武器
-                game.player2.operSet.useWeapon = false;
-            } else if (keyCode == game.keySet.arrowL8) { //使用武器
-                game.player2.operSet.changeWeapon = false;
+            if (keyCode == gamepage.keySet.arrowRight2) {
+                gamepage.player2.operSet.moveRight = false;
+            } else if (keyCode == gamepage.keySet.arrowLeft2) {
+                gamepage.player2.operSet.moveLeft = false;
+            } else if (keyCode == gamepage.keySet.arrowUp2) {
+                gamepage.player2.operSet.moveUp = false;
+            } else if (keyCode == gamepage.keySet.arrowDown2) {
+                gamepage.player2.operSet.moveDown = false;
+            } else if (keyCode == gamepage.keySet.arrowL4) { //炮头向左
+                gamepage.player2.operSet.turnLeft = false;
+            } else if (keyCode == gamepage.keySet.arrowL5) { //炮头向右
+                gamepage.player2.operSet.turnRight = false;
+            } else if (keyCode == gamepage.keySet.arrowL6) { //瞄准
+                gamepage.player2.operSet.lockOn = false;
+            } else if (keyCode == gamepage.keySet.arrowL7) { //使用武器
+                gamepage.player2.operSet.useWeapon = false;
+            } else if (keyCode == gamepage.keySet.arrowL8) { //使用武器
+                gamepage.player2.operSet.changeWeapon = false;
             }
         }
 
-        game.bulletAnimate = function (context, chageRate) { //子弹动画的产生
-            var bulNum = game.bullets.length;
+        gamepage.bulletAnimate = function (context, chageRate) { //子弹动画的产生
+            var bulNum = gamepage.bullets.length;
             for (var i = 0; i < bulNum; i++) {
-                if (!game.bullets[i].live) {
+                if (!gamepage.bullets[i].live) {
                     continue;
                 }
-                game.bullets[i].animate(context, chageRate);
+                gamepage.bullets[i].animate(context, chageRate);
             }
         }
 
-        game.wallCheck = function (pl) { //墙的碰撞检测
+        gamepage.wallCheck = function (pl) { //墙的碰撞检测
             if (pl.x < 0) {
                 pl.x = 0;
             } else if (pl.x + 20 > 400) {
@@ -638,141 +640,166 @@
             }
         }
 
-        game.bomeCheck = function (context, pl) { //全图的碰撞检测
-            var bulNum = game.bullets.length;
+        gamepage.bomeCheck = function (context, pl) { //全图的碰撞检测
+            var bulNum = gamepage.bullets.length;
             for (var i = 0; i < bulNum; i++) {
-                if (!game.bullets[i].live) {
+                if (!gamepage.bullets[i].live) {
                     continue;
                 }
-                game.bullets[i].bomeC(context, pl);
+                gamepage.bullets[i].bomeC(context, pl);
             }
         }
 
-        game.keyEvent = function (changeRate) { //按键处理
-            var moveDistant1 = changeRate * game.player1.moveSpeed;
-            var moveDistant2 = changeRate * game.player2.moveSpeed;
-            if (game.player1.operSet.moveRight) {
-                game.player1.x += moveDistant1;
+        gamepage.keyEvent = function (changeRate) { //按键处理
+            var moveDistant1 = changeRate * gamepage.player1.moveSpeed;
+            var moveDistant2 = changeRate * gamepage.player2.moveSpeed;
+            if (gamepage.player1.operSet.moveRight) {
+                gamepage.player1.x += moveDistant1;
             }
-            if (game.player1.operSet.moveLeft) {
-                game.player1.x -= moveDistant1;
+            if (gamepage.player1.operSet.moveLeft) {
+                gamepage.player1.x -= moveDistant1;
             }
-            if (game.player1.operSet.moveUp) {
-                game.player1.y -= moveDistant1;
+            if (gamepage.player1.operSet.moveUp) {
+                gamepage.player1.y -= moveDistant1;
             }
-            if (game.player1.operSet.moveDown) {
-                game.player1.y += moveDistant1;
+            if (gamepage.player1.operSet.moveDown) {
+                gamepage.player1.y += moveDistant1;
             }
-            if (game.player1.operSet.turnLeft) {
-                game.player1.arcRoun = game.player1.arcRoun - 0.2 * moveDistant1;
-                if (game.player1.arcRoun < 0) {
-                    game.player1.arcRoun = game.player1.arcRoun + 6.28;
+            if (gamepage.player1.operSet.turnLeft) {
+                gamepage.player1.arcRoun = gamepage.player1.arcRoun - 0.2 * moveDistant1;
+                if (gamepage.player1.arcRoun < 0) {
+                    gamepage.player1.arcRoun = gamepage.player1.arcRoun + 6.28;
                 }
             }
-            if (game.player1.operSet.turnRight) {
-                game.player1.arcRoun = game.player1.arcRoun + 0.2 * moveDistant1;
-                if (game.player1.arcRoun > 6.28) {
-                    game.player1.arcRoun = game.player1.arcRoun - 6.28;
+            if (gamepage.player1.operSet.turnRight) {
+                gamepage.player1.arcRoun = gamepage.player1.arcRoun + 0.2 * moveDistant1;
+                if (gamepage.player1.arcRoun > 6.28) {
+                    gamepage.player1.arcRoun = gamepage.player1.arcRoun - 6.28;
                 }
             }
-            if (game.player1.operSet.lockOn) {
-                if (game.player2.x > game.player1.x) {
-                    game.player1.arcRoun = Math.atan((game.player2.y - game.player1.y) / (game.player2.x - game.player1.x));
+            if (gamepage.player1.operSet.lockOn) {
+                if (gamepage.player2.x > gamepage.player1.x) {
+                    gamepage.player1.arcRoun = Math.atan((gamepage.player2.y - gamepage.player1.y) / (gamepage.player2.x - gamepage.player1.x));
                 } else {
-                    game.player1.arcRoun = Math.PI + Math.atan((game.player2.y - game.player1.y) / (game.player2.x - game.player1.x));
+                    gamepage.player1.arcRoun = Math.PI + Math.atan((gamepage.player2.y - gamepage.player1.y) / (gamepage.player2.x - gamepage.player1.x));
                 }
             }
-            if (game.player1.operSet.useWeapon && game.player1.weaDl()) {
-                if (game.WeapNum1 < 50) //为防内存使用过度，子弹总数限制为50个，
+            if (gamepage.player1.operSet.useWeapon && gamepage.player1.weaDl()) {
+                if (gamepage.WeapNum1 < 50) //为防内存使用过度，子弹总数限制为50个，
                 {//生成新子弹
-                    game.bullets.push(BulletCreate(game.player1.x + 10, game.player1.y + 10, game.player1.arcRoun, 5, 1, game.player1.weapType));
-                    game.WeapNum1++;
+                    gamepage.bullets.push(BulletCreate(gamepage.player1.x + 10, gamepage.player1.y + 10, gamepage.player1.arcRoun, 5, 1, gamepage.player1.weapType));
+                    gamepage.WeapNum1++;
                 } else {
-                    if (game.WeapNum2 > 49) {
-                        game.WeapNum2 = 0;
+                    if (gamepage.WeapNum2 > 49) {
+                        gamepage.WeapNum2 = 0;
                     }
-                    //delete game.bullets[game.WeapNum2];
-                    game.bullets[game.WeapNum2] = BulletCreate(game.player1.x + 10, game.player1.y + 10, game.player1.arcRoun, 5, 1, game.player1.weapType);
-                    //game.bullets[game.WeapNum2].bInit(game.player1.x + 10, game.player1.y + 10, game.player1.arcRoun, 5, 1, 1);
-                    game.WeapNum2++;
+                    //delete gamepage.bullets[gamepage.WeapNum2];
+                    gamepage.bullets[gamepage.WeapNum2] = BulletCreate(gamepage.player1.x + 10, gamepage.player1.y + 10, gamepage.player1.arcRoun, 5, 1, gamepage.player1.weapType);
+                    //gamepage.bullets[gamepage.WeapNum2].bInit(gamepage.player1.x + 10, gamepage.player1.y + 10, gamepage.player1.arcRoun, 5, 1, 1);
+                    gamepage.WeapNum2++;
                 }
             }
 
 
-            if (game.player2.operSet.moveRight) { //player2的键位
-                game.player2.x += moveDistant2;
+            if (gamepage.player2.operSet.moveRight) { //player2的键位
+                gamepage.player2.x += moveDistant2;
             }
-            if (game.player2.operSet.moveLeft) {
-                game.player2.x -= moveDistant2;
+            if (gamepage.player2.operSet.moveLeft) {
+                gamepage.player2.x -= moveDistant2;
             }
-            if (game.player2.operSet.moveUp) {
-                game.player2.y -= moveDistant2;
+            if (gamepage.player2.operSet.moveUp) {
+                gamepage.player2.y -= moveDistant2;
             }
-            if (game.player2.operSet.moveDown) {
-                game.player2.y += moveDistant2;
+            if (gamepage.player2.operSet.moveDown) {
+                gamepage.player2.y += moveDistant2;
             }
-            if (game.player2.operSet.turnLeft) {
-                game.player2.arcRoun = game.player2.arcRoun - 0.2 * moveDistant1;
-                if (game.player2.arcRoun < 0) {
-                    game.player2.arcRoun = game.player2.arcRoun + 6.28;
+            if (gamepage.player2.operSet.turnLeft) {
+                gamepage.player2.arcRoun = gamepage.player2.arcRoun - 0.2 * moveDistant1;
+                if (gamepage.player2.arcRoun < 0) {
+                    gamepage.player2.arcRoun = gamepage.player2.arcRoun + 6.28;
                 }
             }
-            if (game.player2.operSet.turnRight) {
-                game.player2.arcRoun = game.player2.arcRoun + 0.2 * moveDistant1;
-                if (game.player2.arcRoun > 6.28) {
-                    game.player2.arcRoun = game.player2.arcRoun - 6.28;
+            if (gamepage.player2.operSet.turnRight) {
+                gamepage.player2.arcRoun = gamepage.player2.arcRoun + 0.2 * moveDistant1;
+                if (gamepage.player2.arcRoun > 6.28) {
+                    gamepage.player2.arcRoun = gamepage.player2.arcRoun - 6.28;
                 }
             }
-            if (game.player2.operSet.lockOn) {
-                if (game.player1.x > game.player2.x) {
-                    game.player2.arcRoun = Math.atan((game.player2.y - game.player1.y) / (game.player2.x - game.player1.x));
+            if (gamepage.player2.operSet.lockOn) {
+                if (gamepage.player1.x > gamepage.player2.x) {
+                    gamepage.player2.arcRoun = Math.atan((gamepage.player2.y - gamepage.player1.y) / (gamepage.player2.x - gamepage.player1.x));
                 } else {
-                    game.player2.arcRoun = Math.PI + Math.atan((game.player2.y - game.player1.y) / (game.player2.x - game.player1.x));
+                    gamepage.player2.arcRoun = Math.PI + Math.atan((gamepage.player2.y - gamepage.player1.y) / (gamepage.player2.x - gamepage.player1.x));
                 }
             }
-            if (game.player2.operSet.useWeapon && game.player2.weaDl()) {
-                if (game.WeapNum1 < 50) {//生成新子弹
-                    game.bullets.push(BulletCreate(game.player2.x + 10, game.player2.y + 10, game.player2.arcRoun, 5, 2, game.player2.weapType));
-                    game.WeapNum1++;
+            if (gamepage.player2.operSet.useWeapon && gamepage.player2.weaDl()) {
+                if (gamepage.WeapNum1 < 50) {//生成新子弹
+                    gamepage.bullets.push(BulletCreate(gamepage.player2.x + 10, gamepage.player2.y + 10, gamepage.player2.arcRoun, 5, 2, gamepage.player2.weapType));
+                    gamepage.WeapNum1++;
                 } else {
-                    if (game.WeapNum2 > 49) {
-                        game.WeapNum2 = 0;
+                    if (gamepage.WeapNum2 > 49) {
+                        gamepage.WeapNum2 = 0;
                     }
-                    //delete game.bullets[game.WeapNum2];
-                    game.bullets[game.WeapNum2] = BulletCreate(game.player2.x + 10, game.player2.y + 10, game.player2.arcRoun, 5, 2, game.player2.weapType);
-                    //game.bullets[game.WeapNum2].bInit(game.player2.x + 10, game.player2.y + 10, game.player2.arcRoun, 5, 2, 1);
-                    game.WeapNum2++;
+                    //delete gamepage.bullets[gamepage.WeapNum2];
+                    gamepage.bullets[gamepage.WeapNum2] = BulletCreate(gamepage.player2.x + 10, gamepage.player2.y + 10, gamepage.player2.arcRoun, 5, 2, gamepage.player2.weapType);
+                    //gamepage.bullets[gamepage.WeapNum2].bInit(gamepage.player2.x + 10, gamepage.player2.y + 10, gamepage.player2.arcRoun, 5, 2, 1);
+                    gamepage.WeapNum2++;
                 }
             }
         }
 
-        game.Loop = function (chageRate) {
-            game.context.clearRect(0, 0, 400, 400); //刷图
+        gamepage.Loop = function (chageRate) {
+            gamepage.ui.clearRect(0, 0, 400, 400); //刷图
 
-            if (0 == game.player1.state || 0 == game.player2.state) {
-                game.context.fillText("end", 200, 60, 400);
+            if (0 == gamepage.player1.state || 0 == gamepage.player2.state) {
+                gamepage.ui.fillText("end", 200, 60, 400);
                 return;
             }
 
-            game.keyEvent(chageRate); //按键事件处理
+            gamepage.keyEvent(chageRate); //按键事件处理
 
-            game.bomeCheck(game.context, game.player1); //检测
-            game.bomeCheck(game.context, game.player2);
+            gamepage.bomeCheck(gamepage.ui.context, gamepage.player1); //检测
+            gamepage.bomeCheck(gamepage.ui.context, gamepage.player2);
 
-            game.wallCheck(game.player1);
-            game.wallCheck(game.player2);
+            gamepage.wallCheck(gamepage.player1);
+            gamepage.wallCheck(gamepage.player2);
 
-            game.bulletAnimate(game.context, chageRate); //子弹动画
+            gamepage.bulletAnimate(gamepage.ui.context, chageRate); //子弹动画
 
-            game.player1.animate(game.context); //玩家动画
-            game.player2.animate(game.context);
+            gamepage.player1.animate(gamepage.ui.context); //玩家动画
+            gamepage.player2.animate(gamepage.ui.context);
+        }
+
+        return gamepage;
+    }
+
+    var MyGame = function() {
+        var game = new Game("trails");
+
+        var gamePage = new MyGamePage();
+
+        gamePage.Init();
+
+        game.Init = function() {
+            game.ChangePage(gamePage);
         }
 
         return game;
     }
 
+    var mainGame = null;
+
+    function ReloadGame() {
+        var gamePage = new MyGamePage();
+
+        gamePage.Init();
+
+        mainGame.ChangePage(gamePage);
+    }
+
     $(function() {
-        new MyGame().Start();
+        mainGame = new MyGame();
+        mainGame.Start();
     });
 </script>
 </body>

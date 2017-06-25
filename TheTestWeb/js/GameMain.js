@@ -34,6 +34,7 @@ function Game(canvasid) {
         if (this.nowPage != null) {
             delete this.nowPage;
         }
+        gamepage.ui = this.ui;
         this.nowPage = gamepage;
     }
 
@@ -86,7 +87,9 @@ function YGameUI(canvas) {
         this.context.fillText(test, x, y, h); 
     }
 
-
+    this.fillRect = function (x, y, w, h) {
+        this.context.fillRect(x, y, w, h);
+    }
 
     return this;
 }
