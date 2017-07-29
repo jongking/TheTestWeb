@@ -422,62 +422,34 @@
         };
     }; //the end of 玩家类
 
-    ////Game对象,直接用于管理整个游戏
-    //function Game() {
-    //    var gameobj = this;
-    //    this.Start = function() {
-    //        this._Init();
-    //        this.Init();
-    //        this._Main();
-    //    }
+    //开始界面
+    function StartGamePage(gameObj) {
+        var gamepage = new YGamePage(gameObj);
 
-    //    this._Main = function() {
-    //        setInterval(function() {
-    //            gameobj._RunLoop();
-    //        }, 1);
-    //    }
+        gamepage.Init = function () {
+            $(window).keydown(gamepage.KeyDownEven);
+        }
 
-    //    this._Init = function() {
-    //        this._gFps = 1000;//fps 用于记录当前fps
-    //        this._gThen = Date.now();
-    //        this._chageRate = 1;
-    //        this.canvas = document.getElementById('trails');
-    //        this.context = this.canvas.getContext('2d');
-    //        this.context.save(); //在这里开始绘制坦克
-    //        this.context.beginPath();
-    //        this.context.lineWidth = 5;
-    //        this.context.stroke();
-    //        this.context.restore();
-    //    }
+        gamepage.KeyDownEven = function (e) {
+            var keyCode = e.keyCode;
 
-    //    this.Init = function() { }
-        
-    //    this._RunLoop = function() {
-    //        var now = Date.now();
-    //        var delta = now - this._gThen;
-    //        this._gFps = 1000 / delta;
-    //        while (this._gFps > 120) {
-    //            now = Date.now();
-    //            delta = now - this._gThen;
-    //            this._gFps = 1000 / delta;
-    //        }
-    //        this._chageRate = delta / 1000;//经过的时间，用于标准化速度
-    //        this._gThen = now;
+            if (keyCode == 13) {
+                var tankgamePage = new TankGamePage(gamepage.game);
+                tankgamePage.Init();
+                gamepage.game.ChangePage(tankgamePage);
+            }
+        }
 
-    //        this.Loop(this._chageRate);
+        gamepage.Loop = function (chageRate) {
+            gamepage.ui.fillText("Click 'Enter' To Start Game", gamepage.game.width / 2, 60, 400);
+        }
 
-    //        this.context.fillText(this._gFps + "fps", 370, 10, 400);//fps
-    //    }
+        return gamepage;
+    }
 
-    //    this.Loop = function () {
-    //        alert("No Loop");
-    //        return;
-    //    }
-    //}
-
-    function MyGamePage() {
-
-        var gamepage = new YGamePage();
+    //正式游戏界面
+    function TankGamePage(gameObj) {
+        var gamepage = new YGamePage(gameObj);
 
         gamepage.Init = function () {
             gamepage.bullets = new Array(); //武器数组
@@ -749,10 +721,8 @@
         }
 
         gamepage.Loop = function (chageRate) {
-            gamepage.ui.clearRect(0, 0, 400, 400); //刷图
-
             if (0 == gamepage.player1.state || 0 == gamepage.player2.state) {
-                gamepage.ui.fillText("end", 200, 60, 400);
+                gamepage.ui.fillText("end", gamepage.game.width / 2, 60, 400);
                 return;
             }
 
@@ -776,7 +746,7 @@
     var MyGame = function() {
         var game = new Game("trails");
 
-        var gamePage = new MyGamePage();
+        var gamePage = new StartGamePage(game);
 
         gamePage.Init();
 
@@ -790,11 +760,13 @@
     var mainGame = null;
 
     function ReloadGame() {
-        var gamePage = new MyGamePage();
+        var gamePage = new StartGamePage(mainGame);
 
         gamePage.Init();
 
         mainGame.ChangePage(gamePage);
+
+        $("#trails").focus();
     }
 
     $(function() {

@@ -4,8 +4,16 @@ function Game(canvasid) {
     var gameobj = this;
 
     this.canvasid = canvasid;
+    this._gFps = 1000;//fps 用于记录当前fps
+    this._gThen = Date.now();
+    this._chageRate = 1;
+    this.canvas = document.getElementById(this.canvasid);
+    this.width = parseInt($(this.canvas).width());
+    this.height = parseInt($(this.canvas).height());
+    this.ui = new YGameUI(this.canvas);
+    this.nowPage = null;
+
     this.Start = function () {
-        this._Init();
         this.Init();
         this._Main();
     }
@@ -16,17 +24,6 @@ function Game(canvasid) {
         }, 1);
     }
 
-    this._Init = function () {
-        this._gFps = 1000;//fps 用于记录当前fps
-        this._gThen = Date.now();
-        this._chageRate = 1;
-        this.canvas = document.getElementById(this.canvasid);
-        this.width = parseInt($(this.canvas).width());
-        this.height = parseInt($(this.canvas).height());
-        this.ui = new YGameUI(this.canvas);
-        this.nowPage = null;
-    }
-
     this.Init = function () { }
 
     this.ChangePage = function (gamepage) {
@@ -34,7 +31,6 @@ function Game(canvasid) {
         if (this.nowPage != null) {
             delete this.nowPage;
         }
-        gamepage.ui = this.ui;
         this.nowPage = gamepage;
     }
 
@@ -61,7 +57,10 @@ function Game(canvasid) {
 }
 
 //一个页面，同一时间只能有一个页面
-function YGamePage() {
+function YGamePage(gameObj) {
+    this.game = gameObj;
+    this.ui = gameObj.ui;
+
     this.Loop = function () {
         alert("No Loop");
         return;
@@ -91,5 +90,9 @@ function YGameUI(canvas) {
         this.context.fillRect(x, y, w, h);
     }
 
+    this.strokeRect = function (x, y, w, h) {
+        this.context.strokeRect(x, y, w, h);
+    }
+    
     return this;
 }

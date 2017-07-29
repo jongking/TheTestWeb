@@ -21,13 +21,17 @@
             this.OpennessToExperience = parseInt(Math.random() * 100);
         }
 
-        function Thing(name, e, a, c, n, o) {
+        function Thing(widthlimit, heightlimit, name, e, a, c, n, o) {
             this.Name = name;
             this.Extraversion = e; //外向、有活力、热情
             this.Agreeableness = a; //愉快、利他、有感染力
             this.Conscientionusness = c; //公正、拘谨、克制
             this.Neuroticism = n; //神经质、消极情绪、神经过敏
             this.OpennessToExperience = o; //直率、创造性、思路开阔
+            this.x = parseInt(Math.random() * widthlimit);
+            this.y = parseInt(Math.random() * heightlimit);
+            this.w = parseInt(Math.random() * (widthlimit - this.x) / 2);
+            this.h = parseInt(Math.random() * (heightlimit - this.y) / 2);
 
             if (this.Extraversion == null) {
                 this.Extraversion = parseInt(Math.random() * 100);
@@ -50,7 +54,7 @@
             var result = [];
             for (var i = 0; i < thingnum; i++) {
                 //随机名称生成
-                var thing = new Thing(thingnames[RandomInt(0, thingnames.length)]);
+                var thing = new Thing(gameScreenWidth, gameScreenHeight, thingnames[RandomInt(0, thingnames.length)]);
                 result.push(thing);
             }
             return result;
@@ -129,6 +133,7 @@
             //循环生成每一关
             for (var i = 0; i < roundTime; i++) {
                 var round = {
+                    RoundIndex: i + 1,//关卡编号
                     RoundMySteryCount: RandomInt(roundMySteryTimeUp, roundMySteryTimeDn),//关卡迷数
                     RoundMySterys: [],//关卡迷 数组
                     RoundThings: []//关卡物品 数组
@@ -211,19 +216,79 @@
             $("#Result").html(MakeResultString(mainRound));
         }
 
+        //开始界面
+        function StartGamePage(gameObj) {
+            var gamepage = new YGamePage(gameObj);
 
-        var MyGame = function () {
-            var game = new Game("GameArea");
-
-            var gamepage = new YGamePage();
-            gamepage.Loop = function () {
+            gamepage.Init = function () {
+                $(window).keydown(gamepage.KeyDownEven);
             }
 
-            game.ChangePage(gamepage);
+            gamepage.KeyDownEven = function (e) {
+                var keyCode = e.keyCode;
+
+                if (keyCode == 13) {
+                    var jieMigamePage = new JieMiGamePage(gamepage.game);
+                    jieMigamePage.Init();
+                    gamepage.game.ChangePage(jieMigamePage);
+                }
+            }
+
+            gamepage.Loop = function (chageRate) {
+                gamepage.ui.fillText("Click 'Enter' To Start Game", gamepage.game.width / 2, 60, 400);
+            }
+
+            return gamepage;
+        }
+
+        function JieMiGamePage(gameObj) {
+            var gamepage = new YGamePage(gameObj);
+
+            gamepage.RoundSet = gameObj.RoundSet;
+            gamepage.RoundNow = 1;//从第一个关卡开始
+            gamepage.RoundNowThings = gamepage.RoundSet.Rounds[gamepage.RoundNow - 1].RoundThings;
+
+            gamepage.Init = function () {
+            }
+
+            //每一帧执行的动作
+            gamepage.Loop = function (chageRate) {
+                Logic(chageRate);
+                View();
+            }
+
+            function Logic(chageRate) {
+
+            }
+
+            function View() {
+                //遍历所有的things并且显示出来
+                for (var i = 0; i < gamepage.RoundNowThings.length; i++) {
+                    var thing = gamepage.RoundNowThings[i];
+                    gamepage.ui.strokeRect(thing.x, thing.y, thing.w, thing.h);
+                    gamepage.ui.fillText(thing.Name, thing.x, thing.y, thing.w);
+                }
+            }
+
+            return gamepage;
+        }
+
+        var JieMiGame = function (round) {
+            var game = new Game("GameArea");
+            game.RoundSet = round;
+
+            var gamepage = new StartGamePage(game);
+
+            gamepage.Init();
+
+            game.Init = function () {
+                game.ChangePage(gamepage);
+            }
 
             return game;
         }
 
+        var mainGame = null;
         var gameScreenWidth = 1024;
         var gameScreenHeight = 768;
         function StartGame() {
@@ -235,7 +300,8 @@
             $("#GameArea").attr("width", gameScreenWidth);
             $("#GameArea").attr("height", gameScreenHeight);
 
-            new MyGame().Start();
+            mainGame = new JieMiGame(mainRound);
+            mainGame.Start();
         }
     </script>
 </head>
