@@ -54,7 +54,7 @@
             var result = [];
             for (var i = 0; i < thingnum; i++) {
                 //随机名称生成
-                var thing = new Thing(gameScreenWidth, gameScreenHeight, thingnames[RandomInt(0, thingnames.length)]);
+                var thing = new Thing(gameScreenWidth - gameRightSpace, gameScreenHeight, thingnames[RandomInt(0, thingnames.length)]);
                 result.push(thing);
             }
             return result;
@@ -74,9 +74,12 @@
         }
 
         //生成一个主迷 尾递归
-        function MakeRandomMyStery(roundThings, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn, i) {
+        function MakeRandomMyStery(roundThings, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn, i, choseThingsArr) {
             if (i == null) {
                 i = 1;
+            }
+            if (choseThingsArr == null) {
+                choseThingsArr = {};
             }
             var roundThingsLength = roundThings.length;
             var roundMyStery = {
@@ -95,7 +98,14 @@
             if (roundMyStery.MySteryType == 1) {
                 roundMyStery.ClickCount = RandomInt(1, 4);
             }
-            roundMyStery.MySteryThing = roundThings[RandomInt(0, roundThingsLength - 1)];//随机物品
+            var index = RandomInt(0, roundThingsLength - 1);
+            if (choseThingsArr[index] != true) { //判断物品是否已经使用
+                choseThingsArr[index] = true;
+            } else {
+                alert("使用了重复的物品" + roundThings[index].Name);
+                return roundMyStery;
+            }
+            roundMyStery.MySteryThing = roundThings[index];//随机物品
 
             var havachild = RandomBool();//是否有子迷
             if (roundMyStery.MySteryType == 0) {//如果类型是物品合成则应该有子迷
@@ -105,7 +115,7 @@
             var roundMySteryWidth = RandomInt(roundMySteryWidthUp, roundMySteryWidthDn) - 1;//确定子迷的个数，-1是因为包括了父迷
 
             for (var j = 0; j < roundMySteryWidth; j++) {
-                var obj = MakeRandomMyStery(roundThings, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn, i + 1);
+                var obj = MakeRandomMyStery(roundThings, roundMySteryHeight, roundMySteryWidthUp, roundMySteryWidthDn, i + 1, choseThingsArr);
                 roundMyStery.ChildMySterys.push(obj);
             }
 
@@ -253,15 +263,15 @@
 
             //每一帧执行的动作
             gamepage.Loop = function (chageRate) {
-                Logic(chageRate);
-                View();
+                logic(chageRate);
+                view();
             }
 
-            function Logic(chageRate) {
+            function logic(chageRate) {
 
             }
 
-            function View() {
+            function view() {
                 //遍历所有的things并且显示出来
                 for (var i = 0; i < gamepage.RoundNowThings.length; i++) {
                     var thing = gamepage.RoundNowThings[i];
@@ -291,6 +301,8 @@
         var mainGame = null;
         var gameScreenWidth = 1024;
         var gameScreenHeight = 768;
+        var gameRightSpace = 100;
+        var gameBottomSpace = 0;
         function StartGame() {
             //if (mainRound == null) {
             //    alert("还没生成关卡");
@@ -309,7 +321,7 @@
     <canvas id="GameArea" style="border:1px solid #000;"> </canvas>
 <div>
     关卡数
-    <input type="text" id="RoundTime" name="RoundTime" value="5" title="关卡数"/>
+    <input type="text" id="RoundTime" name="RoundTime" value="1" title="关卡数"/>
 </div>
 <div>
     关卡迷数
